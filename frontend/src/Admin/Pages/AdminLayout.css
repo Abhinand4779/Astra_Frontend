@@ -1,0 +1,47 @@
+.admin-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.admin-main-content {
+    flex: 1;
+    margin-left: 260px;
+    /* Width of sidebar */
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-page-body {
+    flex: 1;
+}
+
+.admin-footer {
+    height: 60px;
+    background-color: #fff;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 30px;
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.footer-links {
+    display: flex;
+    gap: 20px;
+}
+
+.footer-links span {
+    cursor: pointer;
+}
+
+@media (max-width: 992px) {
+    .admin-main-content {
+        margin-left: 0;
+    }
+
+    .admin-sidebar {
+        transform: translateX(-100%);
+    }
+}

@@ -1,0 +1,126 @@
+.admin-dashboard {
+    padding: 30px;
+    background-color: #f8f9fa;
+    min-height: calc(100vh - 70px);
+}
+
+.page-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 25px;
+    color: #495057;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: #fff;
+    padding: 25px;
+    border-radius: 8px;
+    border: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 10px 0;
+    color: #333;
+}
+
+.stat-detail {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+}
+
+.stat-change {
+    font-weight: 600;
+}
+
+.stat-change.up {
+    color: #22c55e;
+}
+
+.stat-change:not(.up) {
+    color: #ef4444;
+}
+
+.stat-sub {
+    color: #aaa;
+}
+
+.stat-icon-box {
+    width: 45px;
+    height: 45px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.stat-icon-box.blue {
+    background-color: #e0e7ff;
+    color: #6366f1;
+}
+
+.stat-icon-box.purple {
+    background-color: #f3e8ff;
+    color: #a855f7;
+}
+
+.stat-icon-box.indigo {
+    background-color: #e0e7ff;
+    color: #4f46e5;
+}
+
+.stat-icon-box.cyan {
+    background-color: #e0f2fe;
+    color: #0ea5e9;
+}
+
+.dashboard-row {
+    margin-bottom: 30px;
+}
+
+.content-card {
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #f0f0f0;
+    min-height: 200px;
+}
+
+.card-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.card-header h3 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #666;
+    margin: 0;
+    letter-spacing: 1px;
+}
+
+.card-body.empty {
+    padding: 50px;
+    text-align: center;
+    color: #ccc;
+}

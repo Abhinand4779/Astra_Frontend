@@ -1,0 +1,101 @@
+.admin-categories {
+    padding: 30px;
+}
+
+.cat-layout {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 30px;
+}
+
+.cat-form-card,
+.cat-list-card {
+    background: #fff;
+    padding: 25px;
+    border-radius: 8px;
+    border: 1px solid #f0f0f0;
+}
+
+.cat-form-card h3,
+.cat-list-card h3 {
+    font-size: 1rem;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.admin-submit-btn {
+    width: 100%;
+    background: #6366f1;
+    color: #fff;
+    border: none;
+    padding: 12px;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th {
+    text-align: left;
+    padding: 12px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: #888;
+    border-bottom: 2px solid #f8f9fa;
+}
+
+.admin-table td {
+    padding: 15px 12px;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.badge {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.badge.women {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.badge.men {
+    background: #e0e7ff;
+    color: #6366f1;
+}
+
+.badge.kids {
+    background: #dcfce7;
+    color: #22c55e;
+}
+
+.edit-btn,
+.del-btn {
+    background: none;
+    border: none;
+    padding: 5px 8px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.edit-btn {
+    color: #6366f1;
+}
+
+.del-btn {
+    color: #ef4444;
+}
+
+@media (max-width: 1200px) {
+    .cat-layout {
+        grid-template-columns: 1fr;
+    }
+}
