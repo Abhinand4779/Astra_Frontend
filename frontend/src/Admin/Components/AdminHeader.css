@@ -1,11 +1,11 @@
 .admin-header {
     height: 70px;
-    background-color: #fff;
-    border-bottom: 1px solid #f0f0f0;
+    background-color: #ffffff;
+    border-bottom: 1px solid #f1f1f1;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 25px;
+    padding: 0 40px;
     position: sticky;
     top: 0;
     z-index: 900;
@@ -14,85 +14,153 @@
 .header-left {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 30px;
 }
 
 .menu-toggle {
-    background: none;
+    background: #f8f8f8;
     border: none;
-    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    font-size: 1.4rem;
     cursor: pointer;
-    color: #555;
+    color: #444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.menu-toggle:hover {
+    background: #f1f1f1;
+    transform: scale(1.05);
 }
 
 .admin-search {
     display: flex;
-    background-color: #f3f3f9;
-    padding: 5px;
-    border-radius: 4px;
-    width: 300px;
+    align-items: center;
+    background-color: #f6f6f6;
+    padding: 2px 5px;
+    border-radius: 12px;
+    width: 350px;
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.admin-search:focus-within {
+    background-color: #fff;
+    border-color: #b59b5a;
+    box-shadow: 0 4px 15px rgba(181, 155, 90, 0.08);
 }
 
 .admin-search input {
     background: none;
     border: none;
-    padding: 5px 10px;
+    padding: 10px 15px;
     flex: 1;
     outline: none;
+    font-size: 0.9rem;
+    color: #333;
 }
 
 .search-btn {
-    background-color: #6366f1;
+    background-color: #222;
     color: #fff;
     border: none;
-    padding: 5px 15px;
-    border-radius: 4px;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0;
+    /* Hide text, use icon if possible */
+    position: relative;
+}
+
+.search-btn::after {
+    content: '\F52A';
+    /* Bootstrap icon search */
+    font-family: 'bootstrap-icons';
+    font-size: 1rem;
 }
 
 .header-right {
     display: flex;
     align-items: center;
-    gap: 25px;
+    gap: 30px;
 }
 
 .notification-bell {
-    font-size: 1.3rem;
-    color: #888;
+    font-size: 1.4rem;
+    color: #555;
     position: relative;
     cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+
+.notification-bell:hover {
+    background: #f8f8f8;
 }
 
 .notification-bell .dot {
-    width: 8px;
-    height: 8px;
-    background-color: #f43f5e;
+    width: 10px;
+    height: 10px;
+    background-color: #ef4444;
     border-radius: 50%;
     position: absolute;
-    top: 0;
-    right: 0;
+    top: 5px;
+    right: 5px;
     border: 2px solid #fff;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.2);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 .admin-profile {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding-left: 15px;
-    border-left: 1px solid #eee;
+    gap: 15px;
+    padding-left: 25px;
+    border-left: 1px solid #f0f0f0;
+    cursor: pointer;
 }
 
 .admin-avatar {
-    width: 35px;
-    height: 35px;
-    background-color: #e2e8f0;
-    color: #2c313d;
+    width: 42px;
+    height: 42px;
+    background: linear-gradient(135deg, #b59b5a, #d4bc82);
+    color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 40%;
-    font-weight: 700;
-    font-size: 0.8rem;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 12px rgba(181, 155, 90, 0.2);
 }
 
 .admin-info {
@@ -101,12 +169,34 @@
 }
 
 .admin-name {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #333;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #222;
 }
 
 .admin-role {
     font-size: 0.75rem;
-    color: #888;
+    color: #b59b5a;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+@media (max-width: 768px) {
+    .admin-header {
+        padding: 0 20px;
+    }
+
+    .admin-search {
+        display: none;
+    }
+
+    .admin-name,
+    .admin-role {
+        display: none;
+    }
+
+    .header-right {
+        gap: 15px;
+    }
 }

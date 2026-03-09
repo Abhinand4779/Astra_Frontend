@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useSite } from '../context/SiteContext';
 import './Footer.css';
 
 const Footer = () => {
+    const { config } = useSite();
     const [email, setEmail] = useState('');
+
+    if (!config) return null;
+    const { footer } = config;
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Handle newsletter signup
         console.log('Newsletter signup:', email);
         setEmail('');
     };
@@ -16,9 +20,9 @@ const Footer = () => {
         <footer className="footer">
             <div className="footer-top">
                 <div className="footer-column footer-store">
-                    <h3 className="footer-heading">Our Store</h3>
+                    <h3 className="footer-heading-logo">{footer.storeName}</h3>
                     <p className="footer-description">
-                        Astra by Ash (formerly Kiza) was started in 2022 to bring elegance and tradition to your everyday style.
+                        {footer.description}
                     </p>
                 </div>
 
@@ -43,7 +47,7 @@ const Footer = () => {
                 <div className="footer-column footer-newsletter">
                     <h3 className="footer-heading footer-heading-large">Let's get in touch</h3>
                     <p className="footer-newsletter-text">
-                        Sign up for our newsletter and receive 10% off your
+                        {footer.newsletterText || "Sign up for our newsletter and receive 10% off your"}
                     </p>
                     <form className="footer-email-form" onSubmit={handleSubmit}>
                         <input
@@ -62,16 +66,16 @@ const Footer = () => {
             </div>
 
             <div className="footer-bottom">
-                <p className="footer-copyright">&copy;2026 Astra by Ash. All Rights Reserved.</p>
+                <p className="footer-copyright">{footer.copyright}</p>
                 <a
-                    href="https://www.instagram.com/rdr.technology?igsh=eTc5NWUwOWN0eHBs"
+                    href={footer.instagram}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="footer-instagram"
                 >
                     <i className="bi bi-instagram"></i>
                 </a>
-                <p className="footer-credit">Designed By RDR Technology</p>
+                <p className="footer-credit">{footer.credit}</p>
             </div>
         </footer>
     );

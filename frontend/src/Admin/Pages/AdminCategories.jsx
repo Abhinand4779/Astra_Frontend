@@ -1,21 +1,36 @@
 import React, { useState } from 'react';
+import { useSite } from '../../context/SiteContext';
 import './AdminCategories.css';
 
 const AdminCategories = () => {
-    // Initial categories matching the NavBar
-    const [categories, setCategories] = useState([
-        { id: 1, section: 'Women', name: 'Neckpiece', sub: ['Choker', 'Long Chain'] },
-        { id: 2, section: 'Women', name: 'Earrings', sub: ['Jhumkas', 'Studs'] },
-        { id: 3, section: 'Men', name: 'Bracelets', sub: ['Urban Links', 'Leather'] },
-    ]);
+    const { config, updateSection } = useSite();
+    const categories = config?.sectionCategories || { women: [], men: [], kids: [] };
 
-    const [newCat, setNewCat] = useState({ section: 'Women', name: '', sub: '' });
+    // To make it easy to manage, we'll flatten it for the table view
+    const flattenedCats = [
+        ...categories.women.map(c => ({ ...c, section: 'Women' })),
+        ...categories.men.map(c => ({ ...c, section: 'Men' })),
+        ...categories.kids.map(c => ({ ...c, section: 'Kids' })),
+    ];
+
+    const [newCat, setNewCat] = useState({ section: 'Women', name: '', count: 0 });
 
     const handleAdd = (e) => {
         e.preventDefault();
-        const subArray = newCat.sub.split(',').map(s => s.trim());
-        setCategories([...categories, { ...newCat, id: Date.now(), sub: subArray }]);
-        setNewCat({ section: 'Women', name: '', sub: '' });
+        const section = newCat.section.toLowerCase();
+        const updatedSection = [...categories[section], { name: newCat.name, count: parseInt(newCat.count) }];
+
+        const newSiteCategories = { ...categories, [section]: updatedSection };
+        updateSection('sectionCategories', newSiteCategories);
+        setNewCat({ section: 'Women', name: '', count: 0 });
+    };
+
+    const handleDelete = (section, name) => {
+        if (window.confirm(`Delete category "${name}"?`)) {
+            const secKey = section.toLowerCase();
+            const updatedSection = categories[secKey].filter(c => c.name !== name);
+            updateSection('sectionCategories', { ...categories, [secKey]: updatedSection });
+        }
     };
 
     return (
@@ -23,9 +38,8 @@ const AdminCategories = () => {
             <h2 className="page-title">Category Management</h2>
 
             <div className="cat-layout">
-                {/* Form to add new Category */}
                 <div className="cat-form-card">
-                    <h3>Add New Category</h3>
+                    <h3>Add New Category Item</h3>
                     <form onSubmit={handleAdd}>
                         <div className="form-group">
                             <label>Section</label>
@@ -46,44 +60,44 @@ const AdminCategories = () => {
                             />
                         </div>
                         <div className="form-group">
-                            <label>Sub-categories (Comma separated)</label>
+                            <label>Product Count (Display only)</label>
                             <input
-                                type="text"
-                                value={newCat.sub}
-                                onChange={(e) => setNewCat({ ...newCat, sub: e.target.value })}
-                                placeholder="e.g. Adjustable, Kada"
+                                type="number"
+                                value={newCat.count}
+                                onChange={(e) => setNewCat({ ...newCat, count: e.target.value })}
+                                required
                             />
                         </div>
                         <button type="submit" className="admin-submit-btn">Add Category</button>
                     </form>
                 </div>
 
-                {/* List of existing categories */}
                 <div className="cat-list-card">
-                    <h3>Current Categories</h3>
-                    <table className="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Section</th>
-                                <th>Category</th>
-                                <th>Sub-categories</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {categories.map(cat => (
-                                <tr key={cat.id}>
-                                    <td><span className={`badge ${cat.section.toLowerCase()}`}>{cat.section}</span></td>
-                                    <td><strong>{cat.name}</strong></td>
-                                    <td>{cat.sub.join(', ')}</td>
-                                    <td>
-                                        <button className="edit-btn"><i className="bi bi-pencil"></i></button>
-                                        <button className="del-btn"><i className="bi bi-trash"></i></button>
-                                    </td>
+                    <h3>Current Categories (Total: {flattenedCats.length})</h3>
+                    <div className="table-responsive">
+                        <table className="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Section</th>
+                                    <th>Category</th>
+                                    <th>Count</th>
+                                    <th>Actions</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {flattenedCats.map((cat, idx) => (
+                                    <tr key={idx}>
+                                        <td><span className={`badge ${cat.section.toLowerCase()}`}>{cat.section}</span></td>
+                                        <td><strong>{cat.name}</strong></td>
+                                        <td>{cat.count} items</td>
+                                        <td>
+                                            <button className="del-btn" onClick={() => handleDelete(cat.section, cat.name)}><i className="bi bi-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

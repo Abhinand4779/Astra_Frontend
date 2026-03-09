@@ -28,8 +28,8 @@ const AdminLogin = () => {
         <div className="admin-login-page">
             <div className="admin-login-card">
                 <div className="login-header">
-                    <h2>KIZA ADMIN</h2>
-                    <p>Sign in to manage your store</p>
+                    <h2>KIZA <span>ADMIN</span></h2>
+                    <p>Secure Management Portal</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="admin-login-form">

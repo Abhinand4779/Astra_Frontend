@@ -1,32 +1,75 @@
 import React, { useState } from 'react';
-import { allProducts as initialProducts } from '../../data/products';
+import { useSite } from '../../context/SiteContext';
 import './AdminProducts.css';
 
 const AdminProducts = () => {
-    const [products, setProducts] = useState(initialProducts);
+    const { config, updateSection } = useSite();
+    const products = config?.products || [];
+
     const [showModal, setShowModal] = useState(false);
+    const [editingProduct, setEditingProduct] = useState(null);
     const [newProduct, setNewProduct] = useState({
-        name: '',
-        price: '',
-        oldPrice: '',
-        category: '',
-        section: 'Women',
-        description: '',
-        images: ['', '', '', '']
+        name: '', price: '', oldPrice: '', category: '', section: 'Women', description: '', images: ['', '', '', ''], details: ['Material: TBA', 'Weight: TBA']
     });
 
-    const handleAddProduct = (e) => {
+    const handleSave = (e) => {
         e.preventDefault();
-        const productToAdd = {
-            ...newProduct,
-            id: Date.now(),
-            details: ['Material: TBA', 'Weight: TBA'] // Default specs
-        };
-        setProducts([productToAdd, ...products]);
+
+        // Calculate Discount automatically
+        let discount = '';
+        if (newProduct.oldPrice && newProduct.oldPrice !== '') {
+            const currentPrice = parseInt(newProduct.price.replace(/[^\d]/g, ''));
+            const oldPrice = parseInt(newProduct.oldPrice.replace(/[^\d]/g, ''));
+            if (oldPrice > currentPrice && currentPrice > 0) {
+                const diff = oldPrice - currentPrice;
+                const percent = Math.round((diff / oldPrice) * 100);
+                discount = `${percent}%`;
+            }
+        }
+
+        const productToSave = { ...newProduct, discount };
+
+        let updatedProducts;
+        if (editingProduct) {
+            updatedProducts = products.map(p => p.id === editingProduct.id ? { ...productToSave, id: p.id } : p);
+        } else {
+            updatedProducts = [{ ...productToSave, id: Date.now() }, ...products];
+        }
+        updateSection('products', updatedProducts);
+        closeModal();
+    };
+
+    const handleDelete = (id) => {
+        if (window.confirm("Delete this product?")) {
+            updateSection('products', products.filter(p => p.id !== id));
+        }
+    };
+
+    const openEdit = (product) => {
+        setEditingProduct(product);
+        setNewProduct(product);
+        setShowModal(true);
+    };
+
+    const closeModal = () => {
         setShowModal(false);
+        setEditingProduct(null);
         setNewProduct({
-            name: '', price: '', oldPrice: '', category: '', section: 'Women', description: '', images: ['', '', '', '']
+            name: '', price: '', oldPrice: '', category: '', section: 'Women', description: '', images: ['', '', '', ''], details: ['Material: TBA', 'Weight: TBA']
         });
+    };
+
+    const handleFileChange = (e, idx) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const nextImgs = [...newProduct.images];
+                nextImgs[idx] = reader.result;
+                setNewProduct({ ...newProduct, images: nextImgs });
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     return (
@@ -58,10 +101,17 @@ const AdminProducts = () => {
                                 </td>
                                 <td><span className={`badge ${product.section.toLowerCase()}`}>{product.section}</span></td>
                                 <td>{product.category}</td>
-                                <td><strong>{product.price}</strong></td>
                                 <td>
-                                    <button className="edit-btn"><i className="bi bi-pencil"></i></button>
-                                    <button className="del-btn"><i className="bi bi-trash"></i></button>
+                                    <strong>{product.price}</strong>
+                                    {product.discount && (
+                                        <span className="badge rounded-pill bg-danger-subtle text-danger ms-2" style={{ fontSize: '0.65rem' }}>
+                                            -{product.discount} OFF
+                                        </span>
+                                    )}
+                                </td>
+                                <td>
+                                    <button className="edit-btn" onClick={() => openEdit(product)}><i className="bi bi-pencil"></i></button>
+                                    <button className="del-btn" onClick={() => handleDelete(product.id)}><i className="bi bi-trash"></i></button>
                                 </td>
                             </tr>
                         ))}
@@ -69,15 +119,14 @@ const AdminProducts = () => {
                 </table>
             </div>
 
-            {/* Modal for adding new product */}
             {showModal && (
                 <div className="admin-modal-overlay">
                     <div className="admin-modal">
                         <div className="modal-header">
-                            <h3>Add New Product</h3>
-                            <button className="close-modal" onClick={() => setShowModal(false)}>&times;</button>
+                            <h3>{editingProduct ? 'Edit Product' : 'Add New Product'}</h3>
+                            <button className="close-modal" onClick={closeModal}>&times;</button>
                         </div>
-                        <form className="admin-form" onSubmit={handleAddProduct}>
+                        <form className="admin-form" onSubmit={handleSave}>
                             <div className="form-grid">
                                 <div className="form-group">
                                     <label>Product Name</label>
@@ -86,6 +135,10 @@ const AdminProducts = () => {
                                 <div className="form-group">
                                     <label>Price (e.g. ₹85,000)</label>
                                     <input type="text" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })} required />
+                                </div>
+                                <div className="form-group">
+                                    <label>Old Price (For Discounts)</label>
+                                    <input type="text" value={newProduct.oldPrice || ''} onChange={(e) => setNewProduct({ ...newProduct, oldPrice: e.target.value })} placeholder="e.g. ₹1,00,000" />
                                 </div>
                                 <div className="form-group">
                                     <label>Section</label>
@@ -97,36 +150,33 @@ const AdminProducts = () => {
                                 </div>
                                 <div className="form-group">
                                     <label>Category</label>
-                                    <input type="text" value={newProduct.category} onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })} placeholder="e.g. Bangles" required />
+                                    <input type="text" value={newProduct.category} onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })} required />
                                 </div>
                             </div>
 
                             <div className="form-group">
-                                <label>Short Description</label>
-                                <textarea value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} rows="3"></textarea>
-                            </div>
-
-                            <div className="form-group">
-                                <label>Image URLs (At least 1 required)</label>
-                                {newProduct.images.map((img, idx) => (
-                                    <input
-                                        key={idx}
-                                        type="url"
-                                        placeholder={`Image URL ${idx + 1}`}
-                                        value={img}
-                                        onChange={(e) => {
-                                            const newImgs = [...newProduct.images];
-                                            newImgs[idx] = e.target.value;
-                                            setNewProduct({ ...newProduct, images: newImgs });
-                                        }}
-                                        className="mb-2"
-                                        required={idx === 0}
-                                    />
-                                ))}
+                                <label>Product Images (Upload up to 4)</label>
+                                <div className="product-image-uploads">
+                                    {newProduct.images.map((img, idx) => (
+                                        <div key={idx} className="image-upload-item mb-3">
+                                            {img && (
+                                                <div className="mb-2">
+                                                    <img src={img} alt={`Preview ${idx + 1}`} style={{ height: '60px', borderRadius: '4px' }} />
+                                                </div>
+                                            )}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => handleFileChange(e, idx)}
+                                                className="form-control form-control-sm"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
 
                             <div className="modal-footer">
-                                <button type="button" className="cancel-btn" onClick={() => setShowModal(false)}>Cancel</button>
+                                <button type="button" className="cancel-btn" onClick={closeModal}>Cancel</button>
                                 <button type="submit" className="save-btn">Save Product</button>
                             </div>
                         </form>

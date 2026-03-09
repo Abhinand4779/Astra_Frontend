@@ -1,11 +1,11 @@
 import React from 'react';
 import './AdminHeader.css';
 
-const AdminHeader = () => {
+const AdminHeader = ({ toggleSidebar }) => {
     return (
         <header className="admin-header">
             <div className="header-left">
-                <button className="menu-toggle">
+                <button className="menu-toggle" onClick={toggleSidebar}>
                     <i className="bi bi-list"></i>
                 </button>
                 <div className="admin-search">
