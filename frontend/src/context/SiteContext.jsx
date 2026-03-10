@@ -131,7 +131,7 @@ const defaultConfig = {
 };
 
 const SiteContext = createContext();
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
 // Helper to deep merge only the first level of objects (hero, footer, etc.)
 // This ensures that local default assets (like BannerImg) stay if backend doesn't overwrite them

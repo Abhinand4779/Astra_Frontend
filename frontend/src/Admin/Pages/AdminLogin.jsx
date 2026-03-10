@@ -22,7 +22,8 @@ const AdminLogin = () => {
             formData.append('username', credentials.email.trim());
             formData.append('password', credentials.password.trim());
 
-            const response = await fetch('http://localhost:8000/api/auth/login', {
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+            const response = await fetch(`${API_BASE_URL}/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
