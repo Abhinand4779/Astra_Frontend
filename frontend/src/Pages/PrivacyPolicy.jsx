@@ -12,7 +12,7 @@ export const PrivacyPolicy = () => {
             <div className="policy-content">
                 <section className="policy-section">
                     <p className="intro-text">
-                        At <strong>Astra by Ash</strong>, accessible from <a href="https://kiza.in">kiza.in</a>, protecting your personal information and ensuring transparency about how we use it is our top priority. This Privacy Policy explains the types of personal data we collect, how we use it, and the measures we take to safeguard your information.
+                        At <strong>Astra by Ash</strong>, accessible from <a href="https://astra.in">astra.in</a>, protecting your personal information and ensuring transparency about how we use it is our top priority. This Privacy Policy explains the types of personal data we collect, how we use it, and the measures we take to safeguard your information.
                     </p>
                 </section>
 
@@ -94,7 +94,7 @@ export const PrivacyPolicy = () => {
                 <section className="policy-section">
                     <h2 className="section-heading">Changes to This Privacy Policy</h2>
                     <p>
-                        We reserve the right to update this Privacy Policy at any time. Updates will be posted on this page, and the “Last Updated” date will be revised. Continued use of <a href="https://kiza.in">kiza.in</a> means you accept the updated policy.
+                        We reserve the right to update this Privacy Policy at any time. Updates will be posted on this page, and the “Last Updated” date will be revised. Continued use of <a href="https://astra.in">astra.in</a> means you accept the updated policy.
                     </p>
                 </section>
 

@@ -12,7 +12,7 @@ export const ShippingReturn = () => {
             <div className="policy-content">
                 <section className="policy-section">
                     <p className="intro-text">
-                        At <strong>Kiza Collections</strong>, we aim to provide a seamless and trustworthy shopping experience.
+                        At <strong>Astra by Ash</strong>, we aim to provide a seamless and trustworthy shopping experience.
                         Please review our return and refund policy below before placing your order.
                     </p>
                 </section>
@@ -60,8 +60,8 @@ export const ShippingReturn = () => {
                 <section className="policy-section contact-box">
                     <h2 className="section-heading">Need Help?</h2>
                     <p>For any queries regarding your shipment or returns, feel free to reach out to us:</p>
-                    <a href="mailto:kizacollections@gmail.com" className="email-link">
-                        <i className="bi bi-envelope-fill"></i> kizacollections@gmail.com
+                    <a href="mailto:aswathykab@gmail.com" className="email-link">
+                        <i className="bi bi-envelope-fill"></i> aswathykab@gmail.com
                     </a>
                 </section>
             </div>

@@ -17,8 +17,8 @@ const AdminSidebar = () => {
     return (
         <aside className="admin-sidebar">
             <div className="sidebar-brand">
-                <div className="brand-logo">K</div>
-                <h2>KIZA <span>ADMIN</span></h2>
+                <div className="brand-logo">A</div>
+                <h2>ASTRA <span>ADMIN</span></h2>
             </div>
 
             <nav className="sidebar-nav">

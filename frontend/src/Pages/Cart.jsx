@@ -1,10 +1,10 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Cart.css';
 
 const Cart = () => {
-    const { cart, addToCart } = useAuth();
+    const { cart, addToCart, removeFromCart, clearCart } = useAuth();
     const navigate = useNavigate();
 
     const subtotal = cart.reduce((acc, item) => acc + (parseInt(item.price.replace(/[^\d]/g, '')) * item.quantity), 0);
@@ -17,6 +17,7 @@ const Cart = () => {
                     <h2>Your Shopping Bag is Empty</h2>
                     <p>Looks like you haven't added anything to your cart yet.</p>
                     <button onClick={() => navigate('/shop')} className="start-shopping-btn">Start Shopping</button>
+                    <Link to="/wishlist" className="wishlist-link-empty">View your Wishlist →</Link>
                 </div>
             </div>
         );
@@ -25,14 +26,19 @@ const Cart = () => {
     return (
         <div className="cart-page">
             <div className="cart-container">
-                <h1 className="cart-title">Your Bag ({cart.length} items)</h1>
+                <div className="cart-top-bar">
+                    <h1 className="cart-title">Your Bag ({cart.length} {cart.length === 1 ? 'item' : 'items'})</h1>
+                    <button className="clear-cart-btn" onClick={() => { if (window.confirm('Clear your entire bag?')) clearCart(); }}>
+                        <i className="bi bi-trash3 me-1"></i> Clear Bag
+                    </button>
+                </div>
 
                 <div className="cart-layout">
                     <div className="cart-items-section">
                         {cart.map(item => (
                             <div key={item.id} className="cart-item">
                                 <div className="cart-item-img">
-                                    <img src={item.images[0]} alt={item.name} />
+                                    <img src={item.images?.[0] || item.image} alt={item.name} />
                                 </div>
                                 <div className="cart-item-details">
                                     <div className="item-header">
@@ -43,11 +49,17 @@ const Cart = () => {
 
                                     <div className="item-actions">
                                         <div className="qty-controls">
-                                            {/* For demo, we just use alert/placeholder for minus as delete isn't fully implemented yet */}
                                             <button onClick={() => addToCart(item, -1)} disabled={item.quantity <= 1}>-</button>
                                             <span>{item.quantity}</span>
                                             <button onClick={() => addToCart(item, 1)}>+</button>
                                         </div>
+                                        <button
+                                            className="remove-item-btn"
+                                            onClick={() => removeFromCart(item.id)}
+                                            title="Remove item"
+                                        >
+                                            <i className="bi bi-trash3"></i> Remove
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -58,7 +70,7 @@ const Cart = () => {
                         <div className="summary-card">
                             <h3>Order Summary</h3>
                             <div className="summary-row">
-                                <span>Subtotal</span>
+                                <span>Subtotal ({cart.reduce((a, i) => a + i.quantity, 0)} items)</span>
                                 <span>₹{subtotal.toLocaleString()}</span>
                             </div>
                             <div className="summary-row">
@@ -71,6 +83,9 @@ const Cart = () => {
                                 <span>₹{subtotal.toLocaleString()}</span>
                             </div>
                             <button onClick={() => navigate('/checkout')} className="checkout-btn">Proceed to Checkout</button>
+                            <Link to="/wishlist" className="view-wishlist-link">
+                                <i className="bi bi-heart me-1"></i> View Wishlist
+                            </Link>
                         </div>
                     </div>
                 </div>

@@ -17,7 +17,7 @@ export const About = () => {
                     <h2 className="section-title">Our Story</h2>
                     <p className="section-text">
                         Founded in 2022 with a shared passion for fashion and tradition,
-                        <strong> Astra by Ash</strong> (formerly Kiza) was born from a desire
+                        <strong> Astra by Ash</strong> was born from a desire
                         to bring high-quality, elegant, and affordable imitation jewelry and accessories to the modern world.
                     </p>
                     <p className="section-text">

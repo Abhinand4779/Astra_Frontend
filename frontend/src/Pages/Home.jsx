@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useSite } from '../context/SiteContext';
 import './Home.css';
@@ -6,31 +6,67 @@ import './Home.css';
 export const Home = () => {
     const { config } = useSite();
     const [currentSlide, setCurrentSlide] = useState(0);
+    const [promoSlide, setPromoSlide] = useState(0);
+    const [testiSlide, setTestiSlide] = useState(0);
+    const promoRef = useRef(null);
 
-    // Auto-advance slider
+    // Auto-advance hero slider
     useEffect(() => {
         if (!config?.heroSliders || config.heroSliders.length <= 1) return;
-
         const interval = setInterval(() => {
             setCurrentSlide((prev) => (prev + 1) % config.heroSliders.length);
-        }, 5000); // 5 seconds per slide
-
+        }, 5000);
         return () => clearInterval(interval);
     }, [config?.heroSliders]);
 
+    // Auto-advance promo carousel
+    useEffect(() => {
+        if (!config?.promoCarousel || config.promoCarousel.length <= 1) return;
+        const interval = setInterval(() => {
+            setPromoSlide((prev) => (prev + 1) % config.promoCarousel.length);
+        }, 4500);
+        return () => clearInterval(interval);
+    }, [config?.promoCarousel]);
+
+    // Auto-advance testimonials
+    useEffect(() => {
+        if (!config?.testimonials || config.testimonials.length <= 1) return;
+        const interval = setInterval(() => {
+            setTestiSlide((prev) => (prev + 1) % config.testimonials.length);
+        }, 5500);
+        return () => clearInterval(interval);
+    }, [config?.testimonials]);
+
     if (!config) return null;
-    const { hero, heroSliders, coupon, highlights, homeCategories } = config;
+    const { hero, heroSliders, coupon, highlights, homeCategories, promoCarousel, testimonials } = config;
 
     const copyCoupon = () => {
         navigator.clipboard.writeText(coupon.code || 'ASTRA15');
         alert(`Coupon "${coupon.code || 'ASTRA15'}" copied to clipboard!`);
     };
 
-    // Use dynamic sliders if they exist, otherwise fallback to the single static hero
     const hasSliders = heroSliders && heroSliders.length > 0 && heroSliders[0].image !== '';
+    const hasPromo = promoCarousel && promoCarousel.length > 0;
+    const hasTesti = testimonials && testimonials.length > 0;
+
+    const goPromo = (dir) => {
+        setPromoSlide((prev) => {
+            const total = promoCarousel.length;
+            return (prev + dir + total) % total;
+        });
+    };
+
+    const goTesti = (dir) => {
+        setTestiSlide((prev) => {
+            const total = testimonials.length;
+            return (prev + dir + total) % total;
+        });
+    };
 
     return (
         <div className="home-container">
+
+            {/* ── HERO ── */}
             <section className="hero-section">
                 <div className="hero-banner">
                     {hasSliders ? (
@@ -43,10 +79,7 @@ export const Home = () => {
                                         position: index === currentSlide ? 'relative' : 'absolute',
                                         opacity: index === currentSlide ? 1 : 0,
                                         transition: 'opacity 0.8s ease-in-out',
-                                        width: '100%',
-                                        height: '100%',
-                                        top: 0,
-                                        left: 0
+                                        width: '100%', height: '100%', top: 0, left: 0
                                     }}
                                 >
                                     <img src={slide.image} alt={slide.title} className="banner-img" style={{ objectFit: 'cover', width: '100%', height: '100%' }} />
@@ -62,17 +95,12 @@ export const Home = () => {
                                     <button
                                         key={index}
                                         onClick={() => setCurrentSlide(index)}
-                                        style={{
-                                            width: '12px', height: '12px', borderRadius: '50%', border: 'none',
-                                            backgroundColor: index === currentSlide ? '#b59b5a' : 'rgba(255,255,255,0.5)',
-                                            cursor: 'pointer', transition: 'all 0.3s'
-                                        }}
+                                        style={{ width: '12px', height: '12px', borderRadius: '50%', border: 'none', backgroundColor: index === currentSlide ? '#b59b5a' : 'rgba(255,255,255,0.5)', cursor: 'pointer', transition: 'all 0.3s' }}
                                     />
                                 ))}
                             </div>
                         </>
                     ) : (
-                        // Fallback completely to static image
                         <>
                             <img src={hero.bannerImg} alt="Hero Banner" className="banner-img" />
                             <div className="banner-content">
@@ -97,6 +125,7 @@ export const Home = () => {
                 </div>
             </section>
 
+            {/* ── HIGHLIGHTS ── */}
             <section className="highlights-section">
                 <div className="highlights-grid">
                     {highlights && highlights.map((item) => (
@@ -112,6 +141,61 @@ export const Home = () => {
                 </div>
             </section>
 
+            {/* ── PROMO CAROUSEL ── */}
+            {hasPromo && (
+                <section className="promo-carousel-section">
+                    <div className="promo-carousel-header">
+                        <p className="promo-section-label">Our Collections</p>
+                        <h2 className="promo-section-title">Crafted for You</h2>
+                    </div>
+
+                    <div className="promo-carousel-track" ref={promoRef}>
+                        {promoCarousel.map((slide, index) => {
+                            const isActive = index === promoSlide;
+                            const isRight = slide.align === 'right';
+                            return (
+                                <div
+                                    key={slide.id || index}
+                                    className={`promo-slide ${isActive ? 'promo-slide--active' : ''} ${isRight ? 'promo-slide--reverse' : ''}`}
+                                >
+                                    <div className="promo-slide__img-wrap">
+                                        <img src={slide.image} alt={slide.title} className="promo-slide__img" />
+                                        <span className="promo-slide__badge">{slide.badge}</span>
+                                    </div>
+                                    <div className="promo-slide__content">
+                                        <p className="promo-slide__eyebrow">Astra by Ash &mdash; Featured</p>
+                                        <h2 className="promo-slide__title">{slide.title}</h2>
+                                        <p className="promo-slide__subtitle">{slide.subtitle}</p>
+                                        <Link to={slide.link} className="promo-slide__btn">{slide.btnText}</Link>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Controls */}
+                    <div className="promo-carousel-controls">
+                        <button className="promo-ctrl-btn" onClick={() => goPromo(-1)} aria-label="Previous">
+                            <i className="bi bi-arrow-left"></i>
+                        </button>
+                        <div className="promo-dots">
+                            {promoCarousel.map((_, i) => (
+                                <button
+                                    key={i}
+                                    className={`promo-dot ${i === promoSlide ? 'promo-dot--active' : ''}`}
+                                    onClick={() => setPromoSlide(i)}
+                                    aria-label={`Slide ${i + 1}`}
+                                />
+                            ))}
+                        </div>
+                        <button className="promo-ctrl-btn" onClick={() => goPromo(1)} aria-label="Next">
+                            <i className="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </section>
+            )}
+
+            {/* ── SHOP BY CATEGORY ── */}
             <section className="shop-by-category">
                 <h2 className="section-title">Shop By Category</h2>
                 <div className="category-grid">
@@ -125,6 +209,60 @@ export const Home = () => {
                     ))}
                 </div>
             </section>
+
+            {/* ── TESTIMONIALS CAROUSEL (Instagram Style) ── */}
+            {hasTesti && (
+                <section className="testimonials-section">
+                    <div className="section-header text-center mb-5">
+                        <p className="label-style">Customer Stories</p>
+                        <h2 className="title-style">Loved by our Community</h2>
+                    </div>
+
+                    <div className="testimonials-carousel-container">
+                        <div className="testimonials-wrapper">
+                            {testimonials.map((item, index) => (
+                                <div
+                                    key={item.id}
+                                    className={`testimonial-slide ${index === testiSlide ? 'testimonial-slide--active' : ''}`}
+                                >
+                                    <div className="testimonial-card">
+                                        <div className="testimonial-header">
+                                            <div className="user-icon">
+                                                {item.name.charAt(0)}
+                                            </div>
+                                            <div className="user-info">
+                                                <span className="user-name">{item.name}</span>
+                                                <span className="user-handle">{item.handle}</span>
+                                            </div>
+                                            <i className="bi bi-instagram ms-auto insta-icon"></i>
+                                        </div>
+                                        <div className="testimonial-content">
+                                            <div className="rating">
+                                                {[...Array(item.rating || 5)].map((_, i) => (
+                                                    <i key={i} className="bi bi-star-fill active"></i>
+                                                ))}
+                                            </div>
+                                            <p className="testimonial-text">"{item.text}"</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Pagination Dots */}
+                        <div className="testi-dots">
+                            {testimonials.map((_, i) => (
+                                <button
+                                    key={i}
+                                    className={`testi-dot ${i === testiSlide ? 'testi-dot--active' : ''}`}
+                                    onClick={() => setTestiSlide(i)}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
+
         </div>
     );
 };

@@ -1,16 +1,28 @@
 import React from 'react';
 import { useSite } from '../../context/SiteContext';
+import { useAuth } from '../../context/AuthContext';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
     const { config } = useSite();
+    const { adminOrders = [], customers = [] } = useAuth();
+
     const productCount = config?.products?.length || 0;
+    const orderCount = adminOrders.length;
+    const customerCount = customers.length;
+
+    // Calculate actual revenue (excluding cancelled)
+    const totalRevenue = adminOrders.reduce((acc, order) => {
+        if ((order.order_status || order.status)?.toLowerCase() === 'cancelled') return acc;
+        const amount = parseInt((order.total_amount || order.total || '0').replace(/[^\d]/g, ''));
+        return acc + (isNaN(amount) ? 0 : amount);
+    }, 0);
 
     const stats = [
         {
             label: 'Total Revenue',
-            value: '₹12,45,000',
-            trend: '+12.5%',
+            value: `₹${totalRevenue.toLocaleString()}`,
+            trend: 'Live',
             isUp: true,
             icon: 'bi-currency-rupee',
             bg: '#f0fdf4',
@@ -18,8 +30,8 @@ const AdminDashboard = () => {
         },
         {
             label: 'Active Orders',
-            value: '48',
-            trend: '+5.2%',
+            value: orderCount,
+            trend: 'Live',
             isUp: true,
             icon: 'bi-cart-check',
             bg: '#eff6ff',
@@ -35,22 +47,24 @@ const AdminDashboard = () => {
             color: '#ea580c'
         },
         {
-            label: 'Site Visits',
-            value: '1,284',
-            trend: '-2.1%',
-            isUp: false,
-            icon: 'bi-eye',
+            label: 'Total Customers',
+            value: customerCount,
+            trend: 'Live',
+            isUp: true,
+            icon: 'bi-people',
             bg: '#f5f3ff',
             color: '#7c3aed'
         },
     ];
 
-    const recentOrders = [
-        { id: '#ORD-9281', customer: 'Anjali Sharma', items: 3, total: '₹85,000', status: 'Delivered', date: '2 hours ago' },
-        { id: '#ORD-9280', customer: 'Rahul Verma', items: 1, total: '₹12,500', status: 'Processing', date: '5 hours ago' },
-        { id: '#ORD-9279', customer: 'Priya Iyer', items: 2, total: '₹45,200', status: 'Pending', date: 'Yesterday' },
-        { id: '#ORD-9278', customer: 'Vikram Singh', items: 4, total: '₹2,10,000', status: 'Delivered', date: 'Yesterday' },
-    ];
+    const recentOrders = adminOrders.slice(0, 5).map(order => ({
+        id: (order._id || order.id).substring(0, 10),
+        customer: order.shipping_address?.name || (order.shipping_address?.firstName ? `${order.shipping_address.firstName} ${order.shipping_address.lastName}` : 'Guest'),
+        items: order.items?.length || 0,
+        total: order.total_amount || order.total,
+        status: order.order_status || order.status || 'Pending',
+        date: order.created_at ? new Date(order.created_at).toLocaleDateString() : (order.date || 'Today')
+    }));
 
     const topProducts = config?.products?.slice(0, 4) || [];
 
@@ -103,8 +117,11 @@ const AdminDashboard = () => {
                                         <td><span className="fw-bold fs-7">{order.id}</span></td>
                                         <td>{order.customer}</td>
                                         <td>
-                                            <span className={`badge rounded-pill fw-500 ${order.status === 'Delivered' ? 'bg-success-subtle text-success' :
-                                                    order.status === 'Processing' ? 'bg-primary-subtle text-primary' : 'bg-warning-subtle text-warning'
+                                            <span className={`badge rounded-pill fw-500 ${order.status?.toLowerCase() === 'delivered' ? 'bg-success-subtle text-success' :
+                                                    order.status?.toLowerCase() === 'shipped' ? 'bg-info-subtle text-info' :
+                                                        order.status?.toLowerCase() === 'processing' ? 'bg-primary-subtle text-primary' :
+                                                            order.status?.toLowerCase() === 'cancelled' ? 'bg-danger-subtle text-danger' :
+                                                                'bg-warning-subtle text-warning'
                                                 }`}>
                                                 {order.status}
                                             </span>

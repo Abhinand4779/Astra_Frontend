@@ -5,7 +5,7 @@ import './Checkout.css';
 
 const Checkout = () => {
     const navigate = useNavigate();
-    const { user, cart, placeOrder } = useAuth();
+    const { user, admin, cart, placeOrder } = useAuth();
     const [step, setStep] = useState(1); // 1: Shipping, 2: Payment
     const [couponCode, setCouponCode] = useState('');
     const [discount, setDiscount] = useState(0);
@@ -16,10 +16,10 @@ const Checkout = () => {
     const total = subtotal - discount;
 
     const applyCoupon = () => {
-        if (couponCode.toUpperCase() === 'KIZA10') {
-            const amount = subtotal * 0.1;
+        if (couponCode.toUpperCase() === 'ASTRA15') {
+            const amount = subtotal * 0.15;
             setDiscount(amount);
-            setCouponMessage({ text: 'Coupon applied successfully! You saved 10%', type: 'success' });
+            setCouponMessage({ text: 'Coupon applied successfully! You saved 15%', type: 'success' });
         } else if (couponCode.trim() === '') {
             setCouponMessage({ text: 'Please enter a code', type: 'error' });
         } else {
@@ -31,7 +31,7 @@ const Checkout = () => {
     const [shippingData, setShippingData] = useState({
         firstName: '',
         lastName: '',
-        email: user?.email || '',
+        email: user?.email || admin?.email || '',
         phone: '',
         address: '',
         city: '',
@@ -49,14 +49,25 @@ const Checkout = () => {
         setStep(2);
     };
 
-    const handlePayment = () => {
-        // Here we will eventually integrate Stripe
-        alert("Redirecting to Stripe Payment Gateway...");
+    const [processing, setProcessing] = useState(false);
+    const handlePayment = async () => {
+        if (processing) return;
 
-        // Simulating successful payment for now
-        placeOrder(shippingData);
-        alert("Payment Successful! Order Placed.");
-        navigate('/orders');
+        setProcessing(true);
+        // Here we integrate Stripe
+        const orderRes = await placeOrder(shippingData, total);
+
+        if (orderRes?.checkout_url) {
+            window.location.href = orderRes.checkout_url;
+        } else if (orderRes?._id || orderRes?.id) {
+            // This happens if Stripe keys are missing in .env
+            alert("Order created in database, but Stripe payment failed. Please check if you have pasted your real STRIPE_SECRET_KEY in the .env file.");
+            navigate('/');
+        } else {
+            console.error("Order Placement Result:", orderRes);
+            alert("Order failed: " + (orderRes?.detail || "Something went wrong. Please check console."));
+            setProcessing(false);
+        }
     };
 
     return (
@@ -146,7 +157,17 @@ const Checkout = () => {
                                 <div className="stripe-placeholder">
                                     <i className="bi bi-credit-card-2-front"></i>
                                     <p>Secure payment via Stripe</p>
-                                    <button onClick={handlePayment} className="pay-now-btn">Pay Now with Stripe</button>
+                                    <button
+                                        onClick={handlePayment}
+                                        className="pay-now-btn"
+                                        disabled={processing || total <= 0}
+                                        style={{
+                                            opacity: (processing || total <= 0) ? 0.6 : 1,
+                                            cursor: (processing || total <= 0) ? 'not-allowed' : 'pointer'
+                                        }}
+                                    >
+                                        {processing ? 'Connecting to Stripe...' : (total <= 0 ? 'Add Items to Pay' : 'Pay Now with Stripe')}
+                                    </button>
                                 </div>
                             </div>
                         )}

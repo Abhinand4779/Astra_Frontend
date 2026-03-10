@@ -7,13 +7,14 @@ import './ProductDetail.css';
 const ProductDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user, addToCart } = useAuth();
+    const { user, addToCart, toggleWishlist, isInWishlist } = useAuth();
     const [selectedImg, setSelectedImg] = useState(0);
+    const [quantity, setQuantity] = useState(1);
 
     // Find the actual product by ID
     const product = allProducts.find(p => p.id === parseInt(id)) || allProducts[0];
+    const inWishlist = isInWishlist(product?.id);
 
-    const [quantity, setQuantity] = useState(1);
 
     const handlePurchaseClick = (action) => {
         if (!user) {
@@ -94,6 +95,13 @@ const ProductDetail = () => {
                                 </button>
                                 <button className="buy-now-detail-btn" onClick={() => handlePurchaseClick('buy')}>
                                     Buy Now
+                                </button>
+                                <button
+                                    className={`wishlist-toggle-btn ${inWishlist ? 'active' : ''}`}
+                                    onClick={() => toggleWishlist(product)}
+                                    title={inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
+                                >
+                                    <i className={`bi ${inWishlist ? 'bi-heart-fill' : 'bi-heart'}`}></i>
                                 </button>
                             </div>
                         </div>

@@ -240,6 +240,35 @@
     transform: translateY(-2px);
 }
 
+/* Wishlist Toggle Heart Button */
+.wishlist-toggle-btn {
+    width: 54px;
+    height: 54px;
+    border: 1.5px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+    color: #999;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.25s;
+}
+
+.wishlist-toggle-btn:hover {
+    border-color: #e74c3c;
+    color: #e74c3c;
+    background: #fff5f5;
+}
+
+.wishlist-toggle-btn.active {
+    border-color: #e74c3c;
+    color: #e74c3c;
+    background: #fff0f0;
+}
+
 /* Trust Badges */
 .trust-badges {
     display: flex;

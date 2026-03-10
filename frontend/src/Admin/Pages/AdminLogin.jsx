@@ -13,14 +13,35 @@ const AdminLogin = () => {
         setCredentials({ ...credentials, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Secure hardcoded admin check for demo (Email: admin@kiza.in, Pass: admin123)
-        if (credentials.email === 'admin@kiza.in' && credentials.password === 'admin123') {
-            adminLogin({ email: credentials.email, role: 'admin' });
-            navigate('/admin/dashboard');
-        } else {
-            setError('Invalid Admin Credentials');
+        setError('');
+
+        try {
+            const formData = new URLSearchParams();
+            formData.append('username', credentials.email.trim());
+            formData.append('password', credentials.password.trim());
+
+            const response = await fetch('http://localhost:8000/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: formData
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // We logic to fetch user details or just set as admin for now
+                adminLogin({ email: credentials.email, role: 'admin' }, data.access_token);
+                navigate('/admin/dashboard');
+            } else {
+                const errData = await response.json();
+                setError(errData.detail || 'Invalid Admin Credentials');
+            }
+        } catch (err) {
+            console.error("Login error", err);
+            setError('Connection to backend failed');
         }
     };
 
@@ -28,7 +49,7 @@ const AdminLogin = () => {
         <div className="admin-login-page">
             <div className="admin-login-card">
                 <div className="login-header">
-                    <h2>KIZA <span>ADMIN</span></h2>
+                    <h2>ASTRA <span>ADMIN</span></h2>
                     <p>Secure Management Portal</p>
                 </div>
 
@@ -42,7 +63,7 @@ const AdminLogin = () => {
                             name="email"
                             value={credentials.email}
                             onChange={handleChange}
-                            placeholder="admin@kiza.in"
+                            placeholder="admin@astra.in"
                             required
                         />
                     </div>

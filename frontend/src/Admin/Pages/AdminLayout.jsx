@@ -13,8 +13,15 @@ import { useAuth } from '../../context/AuthContext';
 import './AdminLayout.css';
 
 const AdminLayout = () => {
-    const { admin } = useAuth();
+    const { admin, syncAdminData } = useAuth();
     const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
+
+    // Sync admin data on mount
+    React.useEffect(() => {
+        if (admin) {
+            syncAdminData();
+        }
+    }, [admin]);
 
     // Auto-close on smaller screens
     React.useEffect(() => {
@@ -55,7 +62,7 @@ const AdminLayout = () => {
                     </Routes>
                 </main>
                 <footer className="admin-footer">
-                    <div className="footer-left">2026 © KIZA - Admin Panel</div>
+                    <div className="footer-left">2026 © ASTRA - Admin Panel</div>
                 </footer>
             </div>
         </div>
