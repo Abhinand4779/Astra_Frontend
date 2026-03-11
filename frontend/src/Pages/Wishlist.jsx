@@ -9,7 +9,7 @@ const Wishlist = () => {
 
     const handleMoveToCart = (product) => {
         addToCart(product, 1);
-        removeFromWishlist(product.id);
+        removeFromWishlist(product._id || product.id);
         navigate('/cart');
     };
 
@@ -41,12 +41,12 @@ const Wishlist = () => {
 
                 <div className="wishlist-grid">
                     {wishlist.map(item => (
-                        <div key={item.id} className="wishlist-card">
-                            <div className="wishlist-card-img" onClick={() => navigate(`/product/${item.id}`)}>
+                        <div key={item._id || item.id} className="wishlist-card">
+                            <div className="wishlist-card-img" onClick={() => navigate(`/product/${item._id || item.id}`)}>
                                 <img src={item.images?.[0] || item.image} alt={item.name} />
                                 <button
                                     className="wishlist-remove-btn"
-                                    onClick={(e) => { e.stopPropagation(); removeFromWishlist(item.id); }}
+                                    onClick={(e) => { e.stopPropagation(); removeFromWishlist(item._id || item.id); }}
                                     title="Remove from wishlist"
                                 >
                                     <i className="bi bi-x-lg"></i>
@@ -54,7 +54,7 @@ const Wishlist = () => {
                             </div>
                             <div className="wishlist-card-info">
                                 <p className="wishlist-category">{item.category}</p>
-                                <h3 className="wishlist-name" onClick={() => navigate(`/product/${item.id}`)}>{item.name}</h3>
+                                <h3 className="wishlist-name" onClick={() => navigate(`/product/${item._id || item.id}`)}>{item.name}</h3>
                                 <div className="wishlist-price-row">
                                     <span className="wishlist-price">{item.price}</span>
                                     {item.oldPrice && <span className="wishlist-old-price">{item.oldPrice}</span>}
@@ -64,7 +64,7 @@ const Wishlist = () => {
                                     <button className="move-to-cart-btn" onClick={() => handleMoveToCart(item)}>
                                         <i className="bi bi-handbag me-2"></i> Move to Bag
                                     </button>
-                                    <button className="wishlist-del-btn" onClick={() => removeFromWishlist(item.id)}>
+                                    <button className="wishlist-del-btn" onClick={() => removeFromWishlist(item._id || item.id)}>
                                         <i className="bi bi-trash3"></i>
                                     </button>
                                 </div>

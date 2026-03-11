@@ -456,6 +456,65 @@
 
     .shop-sidebar {
         display: none;
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 85%;
+        max-width: 320px;
+        height: 100vh;
+        background: #fff;
+        z-index: 2000;
+        padding: 2rem;
+        overflow-y: auto;
+        transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        display: block;
+        /* Overriding display none but using left for actual hiding */
+    }
+
+    .shop-sidebar.mobile-active {
+        left: 0;
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .sidebar-mobile-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 1rem;
+    }
+
+    .sidebar-mobile-header h3 {
+        margin: 0;
+        font-size: 1.2rem;
+    }
+
+    .close-filters {
+        background: none;
+        border: none;
+        font-size: 2rem;
+        cursor: pointer;
+        color: #777;
+    }
+
+    .mobile-filter-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #000;
+        color: #fff;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-right: -10px;
+    }
+
+    .filter-group {
+        border-bottom: 1px solid #f8f8f8;
     }
 
     .header-overlay h1 {
@@ -470,6 +529,14 @@
     .grid-view {
         grid-template-columns: repeat(2, 1fr);
     }
+}
+
+.mobile-filter-btn {
+    display: none;
+}
+
+.sidebar-mobile-header {
+    display: none;
 }
 
 @media (max-width: 576px) {

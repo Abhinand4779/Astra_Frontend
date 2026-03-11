@@ -7,14 +7,13 @@ import './ProductDetail.css';
 const ProductDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { config } = useSite();
+    const { config, products: allProducts } = useSite();
     const { user, addToCart, toggleWishlist, isInWishlist } = useAuth();
     const [selectedImg, setSelectedImg] = useState(0);
     const [quantity, setQuantity] = useState(1);
 
-    // Find the actual product by ID from site config
-    const allProducts = config?.products || [];
-    const product = allProducts.find(p => p.id.toString() === id.toString());
+    // Find the actual product by ID from site products
+    const product = (allProducts || []).find(p => (p._id || p.id)?.toString() === id?.toString());
 
     if (!product) {
         return (
@@ -31,7 +30,7 @@ const ProductDetail = () => {
         );
     }
 
-    const inWishlist = isInWishlist(product?.id);
+    const inWishlist = product ? isInWishlist(product._id || product.id) : false;
 
 
     const handlePurchaseClick = (action) => {
@@ -40,13 +39,30 @@ const ProductDetail = () => {
             navigate('/profile', { state: { from: `/product/${id}`, action } });
             return;
         }
+        try {
+            if (action === 'buy') {
+                addToCart(product, quantity);
+                navigate('/checkout');
+            } else {
+                addToCart(product, quantity);
+                alert('Added to Cart!');
+            }
+        } catch (err) {
+            console.error('Cart action failed:', err);
+            alert('Could not complete action. Please try again.');
+        }
+    };
 
-        if (action === 'buy') {
-            addToCart(product, quantity);
-            navigate('/checkout');
-        } else {
-            addToCart(product, quantity);
-            alert('Added to Cart!');
+    const handleWishlistClick = () => {
+        if (!user) {
+            alert('Please login to add items to your wishlist.');
+            navigate('/profile', { state: { from: `/product/${id}` } });
+            return;
+        }
+        try {
+            toggleWishlist(product);
+        } catch (err) {
+            console.error('Wishlist toggle failed:', err);
         }
     };
 
@@ -116,7 +132,7 @@ const ProductDetail = () => {
                                 </button>
                                 <button
                                     className={`wishlist-toggle-btn ${inWishlist ? 'active' : ''}`}
-                                    onClick={() => toggleWishlist(product)}
+                                    onClick={handleWishlistClick}
                                     title={inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
                                 >
                                     <i className={`bi ${inWishlist ? 'bi-heart-fill' : 'bi-heart'}`}></i>

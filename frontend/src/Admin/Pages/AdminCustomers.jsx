@@ -3,30 +3,107 @@ import { useAuth } from '../../context/AuthContext';
 import './AdminCustomers.css';
 
 const AdminCustomers = () => {
-    const { customers, adminOrders } = useAuth();
+    const { customers, adminOrders, syncAdminData } = useAuth();
 
-    // Helper to calculate stats per customer
+    // Helper to calculate stats per customer (CASE-INSENSITIVE)
     const getCustomerStats = (email) => {
-        const userOrders = adminOrders.filter(o =>
-            (o.shipping_address?.email === email) ||
-            (o.shipTo?.email === email) ||
-            (o.email === email)
-        );
+        if (!email) return { count: 0, spent: "₹0" };
+        const lowerEmail = email.toLowerCase().trim();
+
+        // Match orders by any email field (direct, shipping_address, or shipTo)
+        const userOrders = (adminOrders || []).filter(o => {
+            const possibleEmails = [
+                o.email,
+                o.shipping_address?.email,
+                o.shipTo?.email,
+                o.user_id === email ? email : null // fallback if user_id is the email
+            ].filter(Boolean).map(e => e.toLowerCase().trim());
+
+            return possibleEmails.includes(lowerEmail);
+        });
+
         const spent = userOrders.reduce((acc, order) => {
-            if ((order.order_status || order.status)?.toLowerCase() === 'cancelled') return acc;
-            const amount = parseInt((order.total_amount || order.total || '0').replace(/[^\d]/g, ''));
+            const status = (order.order_status || order.status || '').toLowerCase();
+            if (status === 'cancelled') return acc;
+            const amountStr = (order.total_amount || order.total || '0').toString();
+            const amount = parseInt(amountStr.replace(/[^\d]/g, ''));
             return acc + (isNaN(amount) ? 0 : amount);
         }, 0);
+
         return { count: userOrders.length, spent: `₹${spent.toLocaleString()}` };
     };
 
-    // If customers is not yet loaded or empty
+    const handleExportCSV = () => {
+        if (!customers || customers.length === 0) return;
+
+        const headers = ['Name', 'Email', 'Orders', 'Total Spent', 'Joining Date', 'Status'];
+        const csvRows = [headers.join(',')];
+
+        customers.forEach(c => {
+            const stats = getCustomerStats(c.email);
+            const row = [
+                `"${(c.name || '').replace(/"/g, '""')}"`,
+                `"${(c.email || '').replace(/"/g, '""')}"`,
+                stats.count,
+                `"${stats.spent}"`,
+                `"${c.created_at ? new Date(c.created_at).toLocaleDateString() : (c.joining || 'N/A')}"`,
+                `"${c.status || 'Active'}"`
+            ];
+            csvRows.push(row.join(','));
+        });
+
+        const csvContent = csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `astra_customers_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const handleDelete = async (customerId, name) => {
+        if (!customerId) return;
+        if (window.confirm(`Are you sure you want to delete customer ${name}? This action cannot be undone.`)) {
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+            const token = localStorage.getItem('adminToken');
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/auth/user/${customerId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    alert("Customer record deleted successfully.");
+                    syncAdminData(); // Refresh list automatically
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    alert(`Failed to delete. Error: ${err.detail || 'Unknown error'}`);
+                }
+            } catch (err) {
+                console.error("Delete failed", err);
+                alert("Error connecting to server. Please check your connection.");
+            }
+        }
+    };
+
+    const handleMessage = (email) => {
+        if (!email) return;
+        window.location.href = `mailto:${email}?subject=Message from ASTRA Official Support&body=Hello, \n\nWe are writing to you regarding your purchase history with ASTRA...`;
+    };
+
+    const handleEdit = (customer) => {
+        alert(`Editing profile for ${customer.name}. \n\nFull administrative editing tools are currently being finalized. You can monitor their latest activity in the Orders section.`);
+    };
+
     if (!customers || customers.length === 0) {
         return (
             <div className="admin-customers px-4">
-                <div className="page-header mb-4">
+                <div className="page-header mb-4 text-center py-5">
+                    <i className="bi bi-people display-1 text-muted mb-3 d-block"></i>
                     <h2 className="page-title">Customer Directory</h2>
-                    <p className="page-subtitle">No customers found in the database.</p>
+                    <p className="page-subtitle text-muted">No registered customers found in your database.</p>
                 </div>
             </div>
         );
@@ -39,8 +116,8 @@ const AdminCustomers = () => {
                     <h2 className="page-title">Customer Directory</h2>
                     <p className="page-subtitle">View and manage your registered users and their purchase history.</p>
                 </div>
-                <button className="btn btn-dark px-4 py-2" style={{ borderRadius: '12px' }}>
-                    <i className="bi bi-download me-2"></i> Export CSV
+                <button className="btn btn-dark px-4 py-2 d-flex align-items-center gap-2" style={{ borderRadius: '12px' }} onClick={handleExportCSV}>
+                    <i className="bi bi-download"></i> Export CSV
                 </button>
             </div>
 
@@ -83,9 +160,11 @@ const AdminCustomers = () => {
                                             </span>
                                         </td>
                                         <td className="text-end">
-                                            <button className="edit-btn"><i className="bi bi-chat-left-dots"></i></button>
-                                            <button className="edit-btn"><i className="bi bi-pencil"></i></button>
-                                            <button className="del-btn text-danger"><i className="bi bi-trash"></i></button>
+                                            <div className="d-flex justify-content-end gap-2">
+                                                <button className="edit-btn" onClick={() => handleMessage(customer.email)} title="Contact Customer"><i className="bi bi-chat-left-dots"></i></button>
+                                                <button className="edit-btn" onClick={() => handleEdit(customer)} title="Edit Details"><i className="bi bi-pencil"></i></button>
+                                                <button className="del-btn text-danger" onClick={() => handleDelete(customer._id || customer.id, customer.name)} title="Remove Customer"><i className="bi bi-trash"></i></button>
+                                            </div>
                                         </td>
                                     </tr>
                                 );

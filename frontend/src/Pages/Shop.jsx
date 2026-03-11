@@ -75,6 +75,8 @@ const Shop = () => {
         ? currentSection.charAt(0).toUpperCase() + currentSection.slice(1)
         : selectedCategory;
 
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+
     return (
         <div className="shop-page">
             <header className="shop-header">
@@ -87,14 +89,21 @@ const Shop = () => {
             </header>
 
             <div className="shop-container">
-                <aside className="shop-sidebar">
+                <aside className={`shop-sidebar ${isFilterOpen ? 'mobile-active' : ''}`}>
+                    <div className="sidebar-mobile-header">
+                        <h3>Filters</h3>
+                        <button className="close-filters" onClick={() => setIsFilterOpen(false)}>&times;</button>
+                    </div>
                     {currentSection !== 'kids' && (
                         <div className="filter-group">
                             <h3 className="filter-title">Product Categories</h3>
                             <ul className="filter-list">
                                 <li
                                     className={(selectedCategory === 'All' || selectedCategory.toLowerCase() === currentSection) ? 'active' : ''}
-                                    onClick={() => handleCategoryClick('All')}
+                                    onClick={() => {
+                                        handleCategoryClick('All');
+                                        setIsFilterOpen(false);
+                                    }}
                                 >
                                     All {currentSection.charAt(0).toUpperCase() + currentSection.slice(1)} Items
                                 </li>
@@ -102,7 +111,10 @@ const Shop = () => {
                                     <li
                                         key={cat.name}
                                         className={selectedCategory.toLowerCase().trim() === cat.name.toLowerCase().trim() ? 'active' : ''}
-                                        onClick={() => handleCategoryClick(cat.name)}
+                                        onClick={() => {
+                                            handleCategoryClick(cat.name);
+                                            setIsFilterOpen(false);
+                                        }}
                                     >
                                         {cat.name} <span>({cat.count})</span>
                                     </li>
@@ -144,6 +156,9 @@ const Shop = () => {
                     <div className="content-toolbar">
                         <p className="results-count">Showing 1–{filteredProducts.length} results</p>
                         <div className="toolbar-right">
+                            <button className="mobile-filter-btn" onClick={() => setIsFilterOpen(true)}>
+                                <i className="bi bi-filter"></i> Filters
+                            </button>
                             <div className="view-switcher">
                                 <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')}><i className="bi bi-grid-3x3-gap"></i></button>
                                 <button className={`view-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')}><i className="bi bi-view-list"></i></button>
@@ -152,24 +167,35 @@ const Shop = () => {
                     </div>
 
                     <div className={`product-display ${viewMode}-view`}>
-                        {filteredProducts.map(product => (
-                            <div key={product.id} className="premium-product-card" onClick={() => navigate(`/product/${product.id}`)}>
-                                <div className="p-card-image">
-                                    {product.discount && <span className="discount-badge">-{product.discount}</span>}
-                                    <img src={product.images[0]} alt={product.name} />
-                                    <button className="quick-view">Quick View</button>
-                                </div>
-                                <div className="p-card-info">
-                                    <span className="p-category">{product.category}</span>
-                                    <h4 className="p-name">{product.name}</h4>
-                                    <div className="price-wrapper">
-                                        <p className="p-price">{product.price}</p>
-                                        {product.oldPrice && <p className="p-old-price" style={{ textDecoration: 'line-through', color: '#999', fontSize: '0.9em', marginLeft: '10px' }}>{product.oldPrice}</p>}
+                        {filteredProducts.map(product => {
+                            const productId = product._id || product.id;
+                            return (
+                                <div key={productId} className="premium-product-card" onClick={() => navigate(`/product/${productId}`)}>
+                                    <div className="p-card-image">
+                                        {product.discount && <span className="discount-badge">-{product.discount}</span>}
+                                        <img src={product.images[0]} alt={product.name} />
+                                        <button className="quick-view">Quick View</button>
                                     </div>
-                                    <button className="buy-now-btn">Buy Now</button>
+                                    <div className="p-card-info">
+                                        <span className="p-category">{product.category}</span>
+                                        <h4 className="p-name">{product.name}</h4>
+                                        <div className="price-wrapper">
+                                            <p className="p-price">{product.price}</p>
+                                            {product.oldPrice && <p className="p-old-price" style={{ textDecoration: 'line-through', color: '#999', fontSize: '0.9em', marginLeft: '10px' }}>{product.oldPrice}</p>}
+                                        </div>
+                                        <button
+                                            className="buy-now-btn"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigate(`/product/${productId}`);
+                                            }}
+                                        >
+                                            Buy Now
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </main>
             </div>

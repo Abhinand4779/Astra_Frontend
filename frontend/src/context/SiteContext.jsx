@@ -82,21 +82,8 @@ const defaultConfig = {
         instagram: 'https://www.instagram.com/rdr.technology?igsh=eTc5NWUwOWN0eHBs'
     },
     navCategories: [
-        {
-            name: 'Women',
-            path: '/category/women',
-            dropdown: [
-                "Anklets", "Hip Chain", "Adjustable Bangle", "Jumkhas",
-                "Diamond Replica", "Bangles", "Bracelet", "Chains",
-                "Earrings", "Neckpiece", "Hindu God Chains",
-                "Hindu Thali chains", "Rings", "Toe Ring", "Traditional"
-            ]
-        },
-        {
-            name: 'Men',
-            path: '/category/men',
-            dropdown: ["Bracelets", "Chains", "Hindu God Chains", "Cross Chains"]
-        },
+        { name: 'Women', path: '/category/women', dropdown: [] },
+        { name: 'Men', path: '/category/men', dropdown: [] },
         { name: 'Kids', path: '/category/kids', dropdown: [] },
         { name: 'Offer Zone', path: '/offer-zone', dropdown: [] },
         { name: 'About Us', path: '/about-us', dropdown: [] },
@@ -104,15 +91,21 @@ const defaultConfig = {
     ],
     sectionCategories: {
         women: [
-            { name: 'Anklets', count: 42 },
-            { name: 'Bangles', count: 85 },
-            { name: 'Bracelets', count: 64 },
-            { name: 'Chains', count: 120 },
-            { name: 'Earrings', count: 210 },
-            { name: 'Hip Chain', count: 15 },
-            { name: 'Neckpiece', count: 124 },
-            { name: 'Rings', count: 56 },
-            { name: 'Traditional', count: 42 }
+            { name: "Anklets", count: 42 },
+            { name: "Adjustable Bangle", count: 25 },
+            { name: "Diamond Replica", count: 18 },
+            { name: "Bracelet", count: 64 },
+            { name: "Earrings", count: 210 },
+            { name: "Hindu God Chains", count: 12 },
+            { name: "Rings", count: 56 },
+            { name: "Traditional", count: 42 },
+            { name: "Hip Chain", count: 15 },
+            { name: "Jumkhas", count: 32 },
+            { name: "Bangles", count: 85 },
+            { name: "Chains", count: 120 },
+            { name: "Neckpiece", count: 124 },
+            { name: "Hindu Thali chains", count: 8 },
+            { name: "Toe Ring", count: 14 }
         ],
         men: [
             { name: 'Bracelets', count: 18 },
@@ -176,10 +169,15 @@ export const SiteProvider = ({ children }) => {
         }
 
         const lastProds = localStorage.getItem('astra_last_products');
+        const lastProdsLite = localStorage.getItem('astra_last_products_lite');
         if (lastProds) {
             try {
                 setProducts(JSON.parse(lastProds));
-            } catch (err) { console.error("Error parsing local products", err); }
+            } catch (err) { }
+        } else if (lastProdsLite) {
+            try {
+                setProducts(JSON.parse(lastProdsLite));
+            } catch (err) { }
         }
 
 
@@ -293,8 +291,16 @@ export const SiteProvider = ({ children }) => {
             setProducts(data);
             try {
                 localStorage.setItem('astra_last_products', JSON.stringify(data));
+                localStorage.removeItem('astra_last_products_lite'); // Clean up lite if full fits
             } catch (e) {
-                console.warn("Local storage quota exceeded for products. Changes are still saved to memory and cloud.");
+                console.warn("Product list too large for full cache. Switching to Lite Cache.");
+                try {
+                    const lite = data.map(({ images, ...rest }) => rest);
+                    localStorage.setItem('astra_last_products_lite', JSON.stringify(lite));
+                    localStorage.removeItem('astra_last_products');
+                } catch (err) {
+                    console.error("Storage completely full. Cache disabled.");
+                }
             }
         } else {
             const newConfig = { ...config, [section]: data };

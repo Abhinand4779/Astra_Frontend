@@ -36,7 +36,7 @@ const Cart = () => {
                 <div className="cart-layout">
                     <div className="cart-items-section">
                         {cart.map(item => (
-                            <div key={item.id} className="cart-item">
+                            <div key={item._id || item.id} className="cart-item">
                                 <div className="cart-item-img">
                                     <img src={item.images?.[0] || item.image} alt={item.name} />
                                 </div>
@@ -55,7 +55,7 @@ const Cart = () => {
                                         </div>
                                         <button
                                             className="remove-item-btn"
-                                            onClick={() => removeFromCart(item.id)}
+                                            onClick={() => removeFromCart(item._id || item.id)}
                                             title="Remove item"
                                         >
                                             <i className="bi bi-trash3"></i> Remove

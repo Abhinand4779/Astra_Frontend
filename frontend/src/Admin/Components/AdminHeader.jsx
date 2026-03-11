@@ -1,7 +1,10 @@
 import React from 'react';
+import { useAuth } from '../../context/AuthContext';
 import './AdminHeader.css';
 
 const AdminHeader = ({ toggleSidebar }) => {
+    const { admin } = useAuth();
+
     return (
         <header className="admin-header">
             <div className="header-left">
@@ -20,10 +23,12 @@ const AdminHeader = ({ toggleSidebar }) => {
                     <span className="dot"></span>
                 </div>
                 <div className="admin-profile">
-                    <div className="admin-avatar">Ad</div>
+                    <div className="admin-avatar">
+                        {admin?.email?.charAt(0).toUpperCase() || 'A'}
+                    </div>
                     <div className="admin-info">
                         <span className="admin-name">Admin</span>
-                        <span className="admin-role">admin</span>
+                        <span className="admin-role">{admin?.email || 'admin'}</span>
                     </div>
                 </div>
             </div>

@@ -130,41 +130,43 @@ const AdminProducts = () => {
             </div>
 
             <div className="products-table-card">
-                <table className="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Section</th>
-                            <th>Category</th>
-                            <th>Price</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {products.map(product => (
-                            <tr key={product._id || product.id}>
-                                <td className="product-cell">
-                                    <img src={product.images[0]} alt={product.name} className="table-thumb" />
-                                    <span>{product.name}</span>
-                                </td>
-                                <td><span className={`badge ${product.section.toLowerCase()}`}>{product.section}</span></td>
-                                <td>{product.category}</td>
-                                <td>
-                                    <strong>{product.price}</strong>
-                                    {product.discount && (
-                                        <span className="badge rounded-pill bg-danger-subtle text-danger ms-2" style={{ fontSize: '0.65rem' }}>
-                                            -{product.discount} OFF
-                                        </span>
-                                    )}
-                                </td>
-                                <td>
-                                    <button className="edit-btn" onClick={() => openEdit(product)}><i className="bi bi-pencil"></i></button>
-                                    <button className="del-btn" onClick={() => handleDelete(product._id || product.id)}><i className="bi bi-trash"></i></button>
-                                </td>
+                <div className="table-responsive">
+                    <table className="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Section</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {products.map(product => (
+                                <tr key={product._id || product.id}>
+                                    <td className="product-cell">
+                                        <img src={product.images[0]} alt={product.name} className="table-thumb" />
+                                        <span>{product.name}</span>
+                                    </td>
+                                    <td><span className={`badge ${product.section.toLowerCase()}`}>{product.section}</span></td>
+                                    <td>{product.category}</td>
+                                    <td>
+                                        <strong>{product.price}</strong>
+                                        {product.discount && (
+                                            <span className="badge rounded-pill bg-danger-subtle text-danger ms-2" style={{ fontSize: '0.65rem' }}>
+                                                -{product.discount} OFF
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td>
+                                        <button className="edit-btn" onClick={() => openEdit(product)}><i className="bi bi-pencil"></i></button>
+                                        <button className="del-btn" onClick={() => handleDelete(product._id || product.id)}><i className="bi bi-trash"></i></button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {showModal && (

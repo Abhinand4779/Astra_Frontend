@@ -34,6 +34,14 @@ const NavBar = () => {
         setSearchQuery('');
     };
 
+    const getDropdownItems = (cat) => {
+        const sectionKey = cat.name.toLowerCase();
+        if (config?.sectionCategories?.[sectionKey]) {
+            return config.sectionCategories[sectionKey].map(c => c.name);
+        }
+        return cat.dropdown || [];
+    };
+
     return (
         <nav className="navbar-container">
             <div className="navbar-wrapper">
@@ -45,52 +53,55 @@ const NavBar = () => {
                 </div>
 
                 <div className={`navbar-links ${isMobileMenuOpen ? 'active' : ''}`}>
-                    {navCategories.map((cat, idx) => (
-                        <div key={idx} className="nav-item">
-                            <NavLink
-                                to={cat.path}
-                                className="nav-link"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                                {cat.name} {cat.dropdown && cat.dropdown.length > 0 && (
-                                    <i className="bi bi-chevron-down ms-1" style={{ fontSize: '0.7em' }}></i>
-                                )}
-                            </NavLink>
+                    {navCategories.map((cat, idx) => {
+                        const items = getDropdownItems(cat);
+                        return (
+                            <div key={idx} className="nav-item">
+                                <NavLink
+                                    to={cat.path}
+                                    className="nav-link"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    {cat.name} {items.length > 0 && (
+                                        <i className="bi bi-chevron-down ms-1" style={{ fontSize: '0.7em' }}></i>
+                                    )}
+                                </NavLink>
 
-                            {cat.dropdown && cat.dropdown.length > 0 && (
-                                (cat.name === 'Women' || cat.name === 'Men') ? (
-                                    <div className="mega-menu">
-                                        <div className="mega-menu-content">
-                                            {cat.dropdown.map((item, i) => (
-                                                <NavLink
-                                                    key={i}
-                                                    to={`${cat.path}/${item.toLowerCase().replace(/ /g, '-')}`}
-                                                    className="mega-menu-link"
-                                                    onClick={() => setIsMobileMenuOpen(false)}
-                                                >
-                                                    {item}
-                                                </NavLink>
-                                            ))}
+                                {items.length > 0 && (
+                                    (cat.name === 'Women' || cat.name === 'Men' || cat.name === 'Kids') ? (
+                                        <div className="mega-menu">
+                                            <div className="mega-menu-content">
+                                                {items.map((item, i) => (
+                                                    <NavLink
+                                                        key={i}
+                                                        to={`${cat.path}/${item.toLowerCase().replace(/ /g, '-')}`}
+                                                        className="mega-menu-link"
+                                                        onClick={() => setIsMobileMenuOpen(false)}
+                                                    >
+                                                        {item}
+                                                    </NavLink>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                ) : (
-                                    <ul className="dropdown">
-                                        {cat.dropdown.map((item, i) => (
-                                            <li key={i}>
-                                                <NavLink
-                                                    to={`${cat.path}/${item.toLowerCase().replace(/ /g, '-')}`}
-                                                    className="dropdown-link"
-                                                    onClick={() => setIsMobileMenuOpen(false)}
-                                                >
-                                                    {item}
-                                                </NavLink>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )
-                            )}
-                        </div>
-                    ))}
+                                    ) : (
+                                        <ul className="dropdown">
+                                            {items.map((item, i) => (
+                                                <li key={i}>
+                                                    <NavLink
+                                                        to={`${cat.path}/${item.toLowerCase().replace(/ /g, '-')}`}
+                                                        className="dropdown-link"
+                                                        onClick={() => setIsMobileMenuOpen(false)}
+                                                    >
+                                                        {item}
+                                                    </NavLink>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
 
                 <div className="navbar-icons">

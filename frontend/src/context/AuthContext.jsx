@@ -1,5 +1,28 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
+// Helper: strip large base64 image data before saving to localStorage
+// This prevents QuotaExceededError when products have file-uploaded images
+const sanitizeForStorage = (items) => {
+    if (!Array.isArray(items)) return items;
+    return items.map(item => ({
+        ...item,
+        images: Array.isArray(item.images)
+            ? item.images.map(img =>
+                typeof img === 'string' && img.startsWith('data:') ? '__BASE64__' : img
+            )
+            : item.images
+    }));
+};
+
+// Safe localStorage setter — fails silently instead of crashing the app
+const safeStorageSet = (key, value) => {
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+        console.warn(`localStorage quota exceeded for key "${key}". Skipping save.`, e);
+    }
+};
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -149,26 +172,55 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('astra_token');
     };
 
+    // Strip heavy base64 images before saving to localStorage to prevent QuotaExceededError crashes
+    const slimProduct = (product) => ({
+        _id: product._id,
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        oldPrice: product.oldPrice,
+        category: product.category,
+        section: product.section,
+        discount: product.discount,
+        // Only keep first image thumbnail, strip the rest to save space
+        images: product.images ? [product.images[0]] : [],
+        image: product.image || (product.images && product.images[0]) || null,
+        details: product.details,
+        quantity: product.quantity
+    });
+
     const addToCart = (product, quantity) => {
+        const pId = product._id || product.id;
         setCart(prev => {
-            const existing = prev.find(item => item.id === product.id);
+            const existing = prev.find(item => (item._id || item.id) === pId);
             let newCart;
             if (existing) {
                 newCart = prev.map(item =>
-                    item.id === product.id ? { ...item, quantity: Math.max(1, item.quantity + quantity) } : item
+                    (item._id || item.id) === pId ? { ...item, quantity: Math.max(1, item.quantity + quantity) } : item
                 );
             } else {
                 newCart = [...prev, { ...product, quantity }];
             }
-            localStorage.setItem('astra_cart', JSON.stringify(newCart));
+            // Save slim version to localStorage (no heavy base64 images)
+            try {
+                const slimCart = newCart.map(item => ({ ...slimProduct(item), quantity: item.quantity }));
+                localStorage.setItem('astra_cart', JSON.stringify(slimCart));
+            } catch (e) {
+                console.warn('Cart too large for localStorage, session-only cart active.', e);
+            }
             return newCart;
         });
     };
 
     const removeFromCart = (productId) => {
         setCart(prev => {
-            const updated = prev.filter(item => item.id !== productId);
-            localStorage.setItem('astra_cart', JSON.stringify(updated));
+            const updated = prev.filter(item => (item._id || item.id) !== productId);
+            try {
+                const slimCart = updated.map(item => ({ ...slimProduct(item), quantity: item.quantity }));
+                localStorage.setItem('astra_cart', JSON.stringify(slimCart));
+            } catch (e) {
+                console.warn('Failed to save updated cart to localStorage due to quota.', e);
+            }
             return updated;
         });
     };
@@ -180,22 +232,28 @@ export const AuthProvider = ({ children }) => {
 
     // --- Wishlist ---
     const toggleWishlist = (product) => {
+        const pId = product._id || product.id;
         setWishlist(prev => {
-            const exists = prev.find(item => item.id === product.id);
+            const exists = prev.find(item => (item._id || item.id) === pId);
             const updated = exists
-                ? prev.filter(item => item.id !== product.id)
+                ? prev.filter(item => (item._id || item.id) !== pId)
                 : [...prev, product];
-            localStorage.setItem('astra_wishlist', JSON.stringify(updated));
+            try {
+                const slimWishlist = updated.map(item => slimProduct(item));
+                localStorage.setItem('astra_wishlist', JSON.stringify(slimWishlist));
+            } catch (e) {
+                console.warn('Wishlist too large for localStorage, session-only wishlist active.', e);
+            }
             return updated;
         });
     };
 
-    const isInWishlist = (productId) => wishlist.some(item => item.id === productId);
+    const isInWishlist = (productId) => wishlist.some(item => (item._id || item.id) === productId);
 
     const removeFromWishlist = (productId) => {
         setWishlist(prev => {
-            const updated = prev.filter(item => item.id !== productId);
-            localStorage.setItem('astra_wishlist', JSON.stringify(updated));
+            const updated = prev.filter(item => (item._id || item.id) !== productId);
+            safeStorageSet('astra_wishlist', sanitizeForStorage(updated));
             return updated;
         });
     };
@@ -206,7 +264,7 @@ export const AuthProvider = ({ children }) => {
 
         const orderData = {
             items: cart.map(item => ({
-                product_id: item.id.toString(),
+                product_id: (item._id || item.id).toString(),
                 name: item.name,
                 price: item.price,
                 quantity: item.quantity,

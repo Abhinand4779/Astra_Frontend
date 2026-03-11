@@ -38,6 +38,7 @@ const AdminLayout = () => {
     }, []);
 
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+    const closeSidebar = () => setIsSidebarOpen(false);
 
     // Check if admin is logged in
     if (!admin) {
@@ -46,7 +47,11 @@ const AdminLayout = () => {
 
     return (
         <div className={`admin-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-            <AdminSidebar isOpen={isSidebarOpen} />
+            {/* Mobile overlay — clicking it closes the sidebar */}
+            {isSidebarOpen && window.innerWidth < 992 && (
+                <div className="sidebar-overlay" onClick={closeSidebar}></div>
+            )}
+            <AdminSidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
             <div className="admin-main-wrapper">
                 <AdminHeader toggleSidebar={toggleSidebar} />
                 <main className="admin-content-area">

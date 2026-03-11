@@ -273,3 +273,49 @@
 .save-btn:hover {
     background: #b59b5a;
 }
+
+/* Mobile responsive for admin products */
+@media (max-width: 768px) {
+    .admin-products {
+        padding: 1.5rem;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .add-btn-main {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .admin-modal {
+        max-width: 100%;
+        max-height: 95vh;
+        border-radius: 16px 16px 0 0;
+        align-self: flex-end;
+    }
+
+    .admin-modal-overlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-header {
+        padding: 1.2rem 1.5rem;
+    }
+
+    .admin-form {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        padding: 1rem 1.5rem;
+    }
+}

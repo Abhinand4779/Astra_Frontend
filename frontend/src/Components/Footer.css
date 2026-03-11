@@ -177,4 +177,17 @@
     .footer-bottom {
         margin-top: 2rem;
     }
+
+    .footer-email-form {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .footer-email-input {
+        width: 100%;
+    }
+
+    .footer-heading-large {
+        font-size: 1.8rem;
+    }
 }

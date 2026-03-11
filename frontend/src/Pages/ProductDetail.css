@@ -324,20 +324,47 @@
 }
 
 @media (max-width: 576px) {
+    .product-detail-page {
+        padding-bottom: 3rem;
+    }
+
+    .detail-container {
+        padding: 0 4%;
+    }
+
     .action-buttons {
         flex-direction: column;
     }
 
     .main-image-wrapper {
-        height: 350px;
+        height: 300px;
+    }
+
+    .detail-title {
+        font-size: 1.6rem;
+    }
+
+    .detail-price {
+        font-size: 1.8rem;
     }
 
     .trust-badges {
         flex-wrap: wrap;
         gap: 20px;
+        justify-content: center;
     }
 
     .badge-item {
         width: 100px;
+    }
+
+    .detail-breadcrumb {
+        font-size: 0.8rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .thumbnail-item {
+        width: 65px;
+        height: 65px;
     }
 }

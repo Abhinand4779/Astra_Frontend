@@ -135,4 +135,15 @@
     .admin-categories {
         padding: 1.5rem;
     }
+
+    .cat-form-card,
+    .cat-list-card {
+        padding: 1.5rem;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 0.8rem 0.6rem;
+        font-size: 0.85rem;
+    }
 }
