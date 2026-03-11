@@ -1,18 +1,36 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { allProducts } from '../data/products';
+import { useSite } from '../context/SiteContext';
 import { useAuth } from '../context/AuthContext';
 import './ProductDetail.css';
 
 const ProductDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { config } = useSite();
     const { user, addToCart, toggleWishlist, isInWishlist } = useAuth();
     const [selectedImg, setSelectedImg] = useState(0);
     const [quantity, setQuantity] = useState(1);
 
-    // Find the actual product by ID
-    const product = allProducts.find(p => p.id === parseInt(id)) || allProducts[0];
+    // Find the actual product by ID from site config
+    const allProducts = config?.products || [];
+    const product = allProducts.find(p => p.id.toString() === id.toString());
+
+    if (!product) {
+        return (
+            <div className="product-detail-page text-center py-5">
+                <div className="container py-5">
+                    <i className="bi bi-search display-1 text-muted mb-4 d-block"></i>
+                    <h3>Product Not Found</h3>
+                    <p className="text-muted mb-4">The item you are looking for might have been removed or is currently unavailable.</p>
+                    <button className="btn btn-primary px-4 py-2" onClick={() => navigate('/shop')}>
+                        Return to Shop
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     const inWishlist = isInWishlist(product?.id);
 
 

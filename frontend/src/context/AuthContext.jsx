@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const AuthContext = createContext();
 
@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     // Synchronize User Specific Orders
-    const syncUserOrders = async () => {
+    const syncUserOrders = useCallback(async () => {
         const token = localStorage.getItem('astra_token');
         if (!token) return;
 
@@ -56,10 +56,10 @@ export const AuthProvider = ({ children }) => {
         } catch (err) {
             console.error("Sync User Orders Failed", err);
         }
-    };
+    }, [API_BASE_URL]);
 
     // Synchronize Admin Data
-    const syncAdminData = async () => {
+    const syncAdminData = useCallback(async () => {
         const token = localStorage.getItem('adminToken');
         if (!token) return;
 
@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }) => {
         } catch (err) {
             console.error("Sync Admin Data Failed", err);
         }
-    };
+    }, [API_BASE_URL]);
 
 
     useEffect(() => {

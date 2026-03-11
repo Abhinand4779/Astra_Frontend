@@ -133,10 +133,16 @@ const defaultConfig = {
 const SiteContext = createContext();
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
-// Helper to deep merge only the first level of objects (hero, footer, etc.)
-// This ensures that local default assets (like BannerImg) stay if backend doesn't overwrite them
+// Helper to deep merge and respect timestamps
 const mergeConfig = (base, override) => {
     if (!override) return base;
+
+    // Safety check: if the server config is actually older than our local one, don't overwrite
+    if (base.lastUpdated && override.lastUpdated && override.lastUpdated < base.lastUpdated) {
+        console.warn("Server config is older than local config. Skipping overwrite.");
+        return base;
+    }
+
     const merged = { ...base };
     Object.keys(override).forEach(key => {
         if (
@@ -155,83 +161,149 @@ const mergeConfig = (base, override) => {
 
 export const SiteProvider = ({ children }) => {
     const [config, setConfig] = useState(defaultConfig);
+    const [products, setProducts] = useState(initialProducts);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchConfig = async () => {
-            // OPTIMIZATION: Check for local config immediately so the UI loads instantly
-            const stored = localStorage.getItem('astra_site_config_v2');
-            if (stored) {
-                try {
-                    setConfig(prev => mergeConfig(prev, JSON.parse(stored)));
-                    setLoading(false); // Stop loading immediately if we have local data
-                } catch (err) { console.error("Error parsing local config", err); }
-            }
-
-            // Create an AbortController with a 1-second timeout
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 1000);
-
+    const fetchAll = async () => {
+        // OPTIMIZATION: Check for local config immediately
+        const stored = localStorage.getItem('astra_site_config_v2');
+        if (stored) {
             try {
-                // Fetch from Backend (with timeout)
-                const response = await fetch(`${API_BASE_URL}/settings/`, {
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-                const data = await response.json();
+                const parsed = JSON.parse(stored);
+                setConfig(prev => mergeConfig(prev, parsed));
+                // if (parsed.products) setProducts(parsed.products); // Products are now fetched separately
+            } catch (err) { console.error("Error parsing local config", err); }
+        }
 
-                if (data && data.config && Object.keys(data.config).length > 0) {
+        const lastProds = localStorage.getItem('astra_last_products');
+        if (lastProds) {
+            try {
+                setProducts(JSON.parse(lastProds));
+            } catch (err) { console.error("Error parsing local products", err); }
+        }
+
+
+        try {
+            // 1. Fetch Config
+            const configRes = await fetch(`${API_BASE_URL}/settings/`);
+            if (configRes.ok) {
+                const data = await configRes.json();
+                if (data && data.config) {
                     setConfig(prev => mergeConfig(prev, data.config));
-                    // Also update localStorage with the fresh data from backend
                     localStorage.setItem('astra_site_config_v2', JSON.stringify(data.config));
                 }
-            } catch (e) {
-                clearTimeout(timeoutId);
-                // If it failed or timed out, and we STILL didn't find local data, stop loading.
-                if (!stored) {
-                    console.warn("Backend unavailable and no local config found.");
+            } else {
+                console.warn("Failed to fetch config from backend.");
+            }
+
+            // 2. Fetch Products
+            const prodRes = await fetch(`${API_BASE_URL}/products/`);
+            if (prodRes.ok) {
+                const prodData = await prodRes.json();
+                setProducts(prodData);
+                // Sync to localStorage for speed, with quota safety
+                try {
+                    localStorage.setItem('astra_last_products', JSON.stringify(prodData));
+                } catch (e) {
+                    console.warn("Local storage quota exceeded for products. Browsing will continue using live data.");
                 }
-            } finally {
-                setLoading(false); // Final guard to ensure loading stops
+            } else {
+                console.warn("Failed to fetch products from backend.");
+            }
+        } catch (e) {
+            console.warn("Backend sync failed, using local/cached data.", e);
+            // If backend fails, and no local products were found initially, products will remain initialProducts
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchAll();
+
+        // Listen for storage changes (sync between tabs)
+        const handleStorageChange = (e) => {
+            if (e.key === 'astra_site_config_v2' && e.newValue) {
+                try {
+                    setConfig(prev => mergeConfig(prev, JSON.parse(e.newValue)));
+                } catch (err) {
+                    console.error("Error syncing config from storage", err);
+                }
+            }
+            if (e.key === 'astra_last_products' && e.newValue) {
+                try {
+                    setProducts(JSON.parse(e.newValue));
+                } catch (err) {
+                    console.error("Error syncing products from storage", err);
+                }
             }
         };
 
-        fetchConfig();
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
 
     const saveConfig = async (newConfig) => {
+        // Add a timestamp to this version
+        const configWithTime = { ...newConfig, lastUpdated: Date.now() };
+
         // Optimistically update UI
-        setConfig(newConfig);
+        setConfig(configWithTime);
 
         // 1. Save to localStorage for redundancy and speed
-        localStorage.setItem('astra_site_config_v2', JSON.stringify(newConfig));
+        localStorage.setItem('astra_site_config_v2', JSON.stringify(configWithTime));
 
         // 2. Save to Backend (Requires Auth Token if it's an admin)
-        const token = localStorage.getItem('adminToken'); // Assuming this is where it's stored
+        const token = localStorage.getItem('adminToken');
         if (token) {
             try {
-                await fetch(`${API_BASE_URL}/settings/`, {
+                // Don't send products in settings if they are large
+                const settingsToSave = { ...configWithTime };
+                delete settingsToSave.products; // Ensure products are not saved with config
+
+                const res = await fetch(`${API_BASE_URL}/settings/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify(newConfig)
+                    body: JSON.stringify(settingsToSave)
                 });
-                console.log("Config saved to backend");
+
+                if (!res.ok) {
+                    const errorMsg = await res.text();
+                    console.error("Backend Save Failed:", res.status, errorMsg);
+                    if (res.status === 413) {
+                        alert("Error: The image sizes are too large to save to the database. Please use smaller photos.");
+                    } else {
+                        alert("Warning: Could not save changes to permanent database. Changes will be lost after logout.");
+                    }
+                } else {
+                    console.log("Config successfully synced to cloud.");
+                }
             } catch (err) {
-                console.error("Failed to save to backend", err);
+                console.error("Failed to connect to backend for saving", err);
+                alert("Network Error: Changes saved locally but failed to sync to server.");
             }
         }
     };
 
     const updateSection = (section, data) => {
-        const newConfig = { ...config, [section]: data };
-        saveConfig(newConfig);
+        if (section === 'products') {
+            setProducts(data);
+            try {
+                localStorage.setItem('astra_last_products', JSON.stringify(data));
+            } catch (e) {
+                console.warn("Local storage quota exceeded for products. Changes are still saved to memory and cloud.");
+            }
+        } else {
+            const newConfig = { ...config, [section]: data };
+            saveConfig(newConfig);
+        }
     };
 
     return (
-        <SiteContext.Provider value={{ config, updateSection, loading }}>
+        <SiteContext.Provider value={{ config, products, updateSection, loading }}>
             {children}
         </SiteContext.Provider>
     );

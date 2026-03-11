@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import { useSite } from '../context/SiteContext';
 import './Shop.css';
 
 const Shop = () => {
-    const { config } = useSite();
+    const { config, products: allSiteProducts } = useSite();
     const { slug, sub } = useParams();
     const location = useLocation();
     const navigate = useNavigate();
@@ -14,54 +14,74 @@ const Shop = () => {
     const [viewMode, setViewMode] = useState('grid');
     const [selectedSize, setSelectedSize] = useState(null);
 
-    if (!config) return null;
-    const { products: allSiteProducts, sectionCategories } = config;
+    if (!config || !allSiteProducts) return null;
+    const { sectionCategories } = config;
 
     const currentSection = slug?.toLowerCase() || 'women';
-    const activeCategories = sectionCategories[currentSection] || sectionCategories.women;
     const materials = ['22K Gold', '18K Gold', 'Rose Gold', 'Silver'];
 
+    // Calculate dynamic counts and active categories with robust matching
+    const sectionProducts = allSiteProducts.filter(p => p.section?.toLowerCase().trim() === currentSection);
+
+    const activeCategories = (sectionCategories[currentSection] || []).map(cat => ({
+        ...cat,
+        count: sectionProducts.filter(p =>
+            p.category?.toLowerCase().trim() === cat.name.toLowerCase().trim()
+        ).length
+    }));
+
+    // Improved Filtering Logic: Handle section views vs sub-category views
     const filteredProducts = isOfferZone
         ? allSiteProducts.filter(p => p.discount)
-        : (selectedCategory === 'All'
-            ? allSiteProducts.filter(p => !slug || p.section?.toLowerCase() === slug.toLowerCase())
-            : allSiteProducts.filter(p =>
-                p.category === selectedCategory ||
-                (slug && p.section?.toLowerCase() === slug.toLowerCase() && p.category === selectedCategory)
-            ));
+        : (selectedCategory === 'All' || selectedCategory.toLowerCase() === currentSection
+            ? sectionProducts
+            : sectionProducts.filter(p =>
+                p.category?.toLowerCase().trim() === selectedCategory.toLowerCase().trim()
+            )
+        );
 
     useEffect(() => {
         if (isOfferZone) {
             setSelectedCategory('Offer Zone');
         } else if (sub) {
-            const formattedSub = sub.split('-').map(word => {
-                if (word === 'thali') return 'Thali';
-                if (word === 'chains') return 'chains';
-                return word.charAt(0).toUpperCase() + word.slice(1);
-            }).join(' ');
-            setSelectedCategory(formattedSub);
-        } else if (slug) {
-            setSelectedCategory(slug.charAt(0).toUpperCase() + slug.slice(1));
+            // Find category by slugified matching
+            const matched = (sectionCategories[currentSection] || []).find(
+                c => c.name.toLowerCase().replace(/ /g, '-') === sub.toLowerCase()
+            );
+            if (matched) {
+                setSelectedCategory(matched.name);
+            } else {
+                const formattedSub = sub.split('-').map(word => {
+                    if (word === 'thali') return 'Thali';
+                    return word.charAt(0).toUpperCase() + word.slice(1);
+                }).join(' ');
+                setSelectedCategory(formattedSub);
+            }
         } else {
             setSelectedCategory('All');
         }
-    }, [slug, sub, location, isOfferZone]);
+    }, [slug, sub, location, isOfferZone, sectionCategories, currentSection]);
 
     const handleCategoryClick = (catName) => {
-        if (catName === 'All') {
+        const isMainSection = catName.toLowerCase() === currentSection || catName === 'All' || catName.startsWith('All ');
+        if (isMainSection) {
             navigate(isOfferZone ? '/offer-zone' : `/category/${currentSection}`);
         } else {
-            navigate(`/category/${currentSection}/${catName.toLowerCase().replace(/ /g, '-')}`);
+            navigate(`/category/${currentSection}/${catName.toLowerCase().trim().replace(/ /g, '-')}`);
         }
     };
+
+    const displayTitle = selectedCategory === 'All' || selectedCategory.toLowerCase() === currentSection
+        ? currentSection.charAt(0).toUpperCase() + currentSection.slice(1)
+        : selectedCategory;
 
     return (
         <div className="shop-page">
             <header className="shop-header">
                 <div className="header-overlay">
-                    <h1>{selectedCategory === 'All' ? currentSection.charAt(0).toUpperCase() + currentSection.slice(1) : selectedCategory}</h1>
+                    <h1>{displayTitle}</h1>
                     <nav className="breadcrumb">
-                        <span>Home</span> / <span>Shop</span> / <span>{selectedCategory}</span>
+                        <Link to="/">Home</Link> / <Link to="/shop">Shop</Link> / <span>{displayTitle}</span>
                     </nav>
                 </div>
             </header>
@@ -73,7 +93,7 @@ const Shop = () => {
                             <h3 className="filter-title">Product Categories</h3>
                             <ul className="filter-list">
                                 <li
-                                    className={selectedCategory === 'All' ? 'active' : ''}
+                                    className={(selectedCategory === 'All' || selectedCategory.toLowerCase() === currentSection) ? 'active' : ''}
                                     onClick={() => handleCategoryClick('All')}
                                 >
                                     All {currentSection.charAt(0).toUpperCase() + currentSection.slice(1)} Items
@@ -81,7 +101,7 @@ const Shop = () => {
                                 {activeCategories.map(cat => (
                                     <li
                                         key={cat.name}
-                                        className={selectedCategory === cat.name ? 'active' : ''}
+                                        className={selectedCategory.toLowerCase().trim() === cat.name.toLowerCase().trim() ? 'active' : ''}
                                         onClick={() => handleCategoryClick(cat.name)}
                                     >
                                         {cat.name} <span>({cat.count})</span>

@@ -4,10 +4,10 @@ import { useAuth } from '../../context/AuthContext';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
-    const { config } = useSite();
+    const { config, products = [] } = useSite();
     const { adminOrders = [], customers = [] } = useAuth();
 
-    const productCount = config?.products?.length || 0;
+    const productCount = products.length;
     const orderCount = adminOrders.length;
     const customerCount = customers.length;
 
@@ -66,7 +66,27 @@ const AdminDashboard = () => {
         date: order.created_at ? new Date(order.created_at).toLocaleDateString() : (order.date || 'Today')
     }));
 
-    const topProducts = config?.products?.slice(0, 4) || [];
+    // Calculate actual top products from sales
+    const productSales = {};
+    adminOrders.forEach(order => {
+        if ((order.order_status || order.status)?.toLowerCase() === 'cancelled') return;
+        (order.items || []).forEach(item => {
+            const id = item.product_id || item.id;
+            if (!productSales[id]) {
+                productSales[id] = {
+                    name: item.name,
+                    category: item.category || 'Jewelry',
+                    image: item.image || (item.images && item.images[0]),
+                    price: item.price,
+                    count: 0
+                };
+            }
+            productSales[id].count += (item.quantity || 1);
+        });
+    });
+
+    const sortedSales = Object.values(productSales).sort((a, b) => b.count - a.count);
+    const topProducts = sortedSales.length > 0 ? sortedSales.slice(0, 4) : (config?.products?.slice(0, 4) || []);
 
     return (
         <div className="admin-dashboard">
@@ -118,10 +138,10 @@ const AdminDashboard = () => {
                                         <td>{order.customer}</td>
                                         <td>
                                             <span className={`badge rounded-pill fw-500 ${order.status?.toLowerCase() === 'delivered' ? 'bg-success-subtle text-success' :
-                                                    order.status?.toLowerCase() === 'shipped' ? 'bg-info-subtle text-info' :
-                                                        order.status?.toLowerCase() === 'processing' ? 'bg-primary-subtle text-primary' :
-                                                            order.status?.toLowerCase() === 'cancelled' ? 'bg-danger-subtle text-danger' :
-                                                                'bg-warning-subtle text-warning'
+                                                order.status?.toLowerCase() === 'shipped' ? 'bg-info-subtle text-info' :
+                                                    order.status?.toLowerCase() === 'processing' ? 'bg-primary-subtle text-primary' :
+                                                        order.status?.toLowerCase() === 'cancelled' ? 'bg-danger-subtle text-danger' :
+                                                            'bg-warning-subtle text-warning'
                                                 }`}>
                                                 {order.status}
                                             </span>
@@ -144,7 +164,7 @@ const AdminDashboard = () => {
                         {topProducts.length > 0 ? (
                             topProducts.map((product, idx) => (
                                 <div key={idx} className="activity-item">
-                                    <img src={product.images[0]} alt={product.name} className="activity-img" />
+                                    <img src={(product.images && product.images[0]) || product.image || (product.img && product.img[0])} alt={product.name} className="activity-img" />
                                     <div className="activity-info">
                                         <div className="activity-title text-truncate" style={{ maxWidth: '150px' }}>{product.name}</div>
                                         <div className="activity-meta">{product.category}</div>

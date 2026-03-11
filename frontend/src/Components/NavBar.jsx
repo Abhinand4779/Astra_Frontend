@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSite } from '../context/SiteContext';
 import logo from '../assets/Logo/original.png';
 import './NavBar.css';
 
@@ -10,6 +11,9 @@ const NavBar = () => {
     const [searchQuery, setSearchQuery] = useState('');
 
     const { cart, wishlist } = useAuth();
+    const { config } = useSite();
+    const navCategories = config?.navCategories || [];
+
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
     const wishlistCount = wishlist?.length || 0;
 
@@ -20,15 +24,12 @@ const NavBar = () => {
     const toggleSearch = () => {
         setIsSearchOpen(!isSearchOpen);
         if (!isSearchOpen) {
-            // Focus input after a short delay for animation
             setTimeout(() => document.getElementById('search-input')?.focus(), 100);
         }
     };
 
     const handleSearchSubmit = (e) => {
         e.preventDefault();
-        console.log('Searching for:', searchQuery);
-        // Navigate or handle search
         setIsSearchOpen(false);
         setSearchQuery('');
     };
@@ -44,121 +45,52 @@ const NavBar = () => {
                 </div>
 
                 <div className={`navbar-links ${isMobileMenuOpen ? 'active' : ''}`}>
-                    {/* Women dropdown */}
-                    <div className="nav-item">
-                        <NavLink
-                            to="/category/women"
-                            className="nav-link"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            Women <i className="bi bi-chevron-down ms-1" style={{ fontSize: '0.7em' }}></i>
-                        </NavLink>
-                        <ul className="dropdown">
-                            {[
-                                "Anklets", "Hip Chain", "Adjustable Bangle", "Jumkhas",
-                                "Diamond Replica", "Bangles", "Bracelet", "Chains",
-                                "Earrings", "Neckpiece", "Hindu God Chains",
-                                "Hindu Thali chains", "Rings", "Toe Ring", "Traditional"
-                            ].map((item) => (
-                                <li key={item}>
-                                    <NavLink
-                                        to={`/category/women/${item.toLowerCase().replace(/ /g, '-')}`}
-                                        className="dropdown-link"
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                    >
-                                        {item}
-                                    </NavLink>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                    {navCategories.map((cat, idx) => (
+                        <div key={idx} className="nav-item">
+                            <NavLink
+                                to={cat.path}
+                                className="nav-link"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                {cat.name} {cat.dropdown && cat.dropdown.length > 0 && (
+                                    <i className="bi bi-chevron-down ms-1" style={{ fontSize: '0.7em' }}></i>
+                                )}
+                            </NavLink>
 
-                    {/* Men dropdown */}
-                    <div className="nav-item">
-                        <NavLink
-                            to="/category/men"
-                            className="nav-link"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            Men <i className="bi bi-chevron-down ms-1" style={{ fontSize: '0.7em' }}></i>
-                        </NavLink>
-                        <ul className="dropdown">
-                            <li>
-                                <NavLink
-                                    to="/category/men/clothing"
-                                    className="dropdown-link"
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                    Bracelets
-                                </NavLink>
-                            </li>
-                            <li>
-                                <NavLink
-                                    to="/category/men/accessories"
-                                    className="dropdown-link"
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                    Chains
-                                </NavLink>
-                            </li>
-                            <li>
-                                <NavLink
-                                    to="/category/men/accessories"
-                                    className="dropdown-link"
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                    Hindu God Chains
-                                </NavLink>
-                            </li>
-                            <li>
-                                <NavLink
-                                    to="/category/men/accessories"
-                                    className="dropdown-link"
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                    Cross Chains
-                                </NavLink>
-                            </li>
-                        </ul>
-                    </div>
-
-                    {/* Remaining items */}
-                    <div className="nav-item">
-                        <NavLink
-                            to="/category/kids"
-                            className="nav-link"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            Kids
-                        </NavLink>
-                    </div>
-                    <div className="nav-item">
-                        <NavLink
-                            to="/offer-zone"
-                            className="nav-link"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            Offer Zone
-                        </NavLink>
-                    </div>
-                    <div className="nav-item">
-                        <NavLink
-                            to="/about-us"
-                            className="nav-link"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            About Us
-                        </NavLink>
-                    </div>
-                    <div className="nav-item">
-                        <NavLink
-                            to="/contact-us"
-                            className="nav-link"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            Contact Us
-                        </NavLink>
-                    </div>
+                            {cat.dropdown && cat.dropdown.length > 0 && (
+                                (cat.name === 'Women' || cat.name === 'Men') ? (
+                                    <div className="mega-menu">
+                                        <div className="mega-menu-content">
+                                            {cat.dropdown.map((item, i) => (
+                                                <NavLink
+                                                    key={i}
+                                                    to={`${cat.path}/${item.toLowerCase().replace(/ /g, '-')}`}
+                                                    className="mega-menu-link"
+                                                    onClick={() => setIsMobileMenuOpen(false)}
+                                                >
+                                                    {item}
+                                                </NavLink>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <ul className="dropdown">
+                                        {cat.dropdown.map((item, i) => (
+                                            <li key={i}>
+                                                <NavLink
+                                                    to={`${cat.path}/${item.toLowerCase().replace(/ /g, '-')}`}
+                                                    className="dropdown-link"
+                                                    onClick={() => setIsMobileMenuOpen(false)}
+                                                >
+                                                    {item}
+                                                </NavLink>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )
+                            )}
+                        </div>
+                    ))}
                 </div>
 
                 <div className="navbar-icons">

@@ -3,8 +3,8 @@ import { useSite } from '../../context/SiteContext';
 import './AdminProducts.css';
 
 const AdminProducts = () => {
-    const { config, updateSection } = useSite();
-    const products = config?.products || [];
+    const { config, products, updateSection } = useSite();
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
     const [showModal, setShowModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
@@ -12,8 +12,9 @@ const AdminProducts = () => {
         name: '', price: '', oldPrice: '', category: '', section: 'Women', description: '', images: ['', '', '', ''], details: ['Material: TBA', 'Weight: TBA']
     });
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
+        const token = localStorage.getItem('adminToken');
 
         // Calculate Discount automatically
         let discount = '';
@@ -27,21 +28,68 @@ const AdminProducts = () => {
             }
         }
 
-        const productToSave = { ...newProduct, discount };
+        const productData = { ...newProduct, discount };
 
-        let updatedProducts;
-        if (editingProduct) {
-            updatedProducts = products.map(p => p.id === editingProduct.id ? { ...productToSave, id: p.id } : p);
-        } else {
-            updatedProducts = [{ ...productToSave, id: Date.now() }, ...products];
+        try {
+            let res;
+            if (editingProduct) {
+                // UPDATE existing product
+                const productId = editingProduct._id || editingProduct.id;
+                res = await fetch(`${API_BASE_URL}/products/${productId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(productData)
+                });
+            } else {
+                // CREATE new product
+                res = await fetch(`${API_BASE_URL}/products/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(productData)
+                });
+            }
+
+            if (res.ok) {
+                const savedProduct = await res.json();
+                let updatedList;
+                if (editingProduct) {
+                    updatedList = products.map(p => (p._id || p.id) === (editingProduct._id || editingProduct.id) ? savedProduct : p);
+                } else {
+                    updatedList = [savedProduct, ...products];
+                }
+                updateSection('products', updatedList);
+                closeModal();
+            } else {
+                const err = await res.text();
+                console.error("Save failed", err);
+                alert("Failed to save product to database. Check image sizes.");
+            }
+        } catch (err) {
+            console.error("Error saving product", err);
+            alert("Connection error. Product not saved.");
         }
-        updateSection('products', updatedProducts);
-        closeModal();
     };
 
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (window.confirm("Delete this product?")) {
-            updateSection('products', products.filter(p => p.id !== id));
+            const token = localStorage.getItem('adminToken');
+            try {
+                const res = await fetch(`${API_BASE_URL}/products/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    updateSection('products', products.filter(p => (p._id || p.id) !== id));
+                }
+            } catch (err) {
+                console.error("Delete failed", err);
+            }
         }
     };
 
@@ -94,7 +142,7 @@ const AdminProducts = () => {
                     </thead>
                     <tbody>
                         {products.map(product => (
-                            <tr key={product.id}>
+                            <tr key={product._id || product.id}>
                                 <td className="product-cell">
                                     <img src={product.images[0]} alt={product.name} className="table-thumb" />
                                     <span>{product.name}</span>
@@ -111,7 +159,7 @@ const AdminProducts = () => {
                                 </td>
                                 <td>
                                     <button className="edit-btn" onClick={() => openEdit(product)}><i className="bi bi-pencil"></i></button>
-                                    <button className="del-btn" onClick={() => handleDelete(product.id)}><i className="bi bi-trash"></i></button>
+                                    <button className="del-btn" onClick={() => handleDelete(product._id || product.id)}><i className="bi bi-trash"></i></button>
                                 </td>
                             </tr>
                         ))}
@@ -142,7 +190,13 @@ const AdminProducts = () => {
                                 </div>
                                 <div className="form-group">
                                     <label>Section</label>
-                                    <select value={newProduct.section} onChange={(e) => setNewProduct({ ...newProduct, section: e.target.value })}>
+                                    <select
+                                        value={newProduct.section}
+                                        onChange={(e) => {
+                                            const section = e.target.value;
+                                            setNewProduct({ ...newProduct, section, category: '' }); // Clear category when section changes
+                                        }}
+                                    >
                                         <option value="Women">Women</option>
                                         <option value="Men">Men</option>
                                         <option value="Kids">Kids</option>
@@ -150,7 +204,41 @@ const AdminProducts = () => {
                                 </div>
                                 <div className="form-group">
                                     <label>Category</label>
-                                    <input type="text" value={newProduct.category} onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })} required />
+                                    <select
+                                        className="form-select"
+                                        value={(config?.sectionCategories?.[newProduct.section.toLowerCase()] || []).some(c => c.name === newProduct.category) ? newProduct.category : (newProduct.category === '' ? '' : 'CUSTOM_ENTRY')}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val === 'CUSTOM_ENTRY') {
+                                                setNewProduct({ ...newProduct, category: 'CUSTOM_ENTRY' });
+                                            } else {
+                                                setNewProduct({ ...newProduct, category: val });
+                                            }
+                                        }}
+                                        required
+                                    >
+                                        <option value="">-- Select Existing Category --</option>
+                                        {(config?.sectionCategories?.[newProduct.section.toLowerCase()] || []).map((cat, idx) => (
+                                            <option key={idx} value={cat.name}>{cat.name}</option>
+                                        ))}
+                                        <option value="CUSTOM_ENTRY">+ Add New/Other Category</option>
+                                    </select>
+
+                                    {/* Show text input if "Add New" is selected OR if it's currently a custom value not in the list */}
+                                    {(newProduct.category === 'CUSTOM_ENTRY' || (newProduct.category !== '' && !(config?.sectionCategories?.[newProduct.section.toLowerCase()] || []).some(c => c.name === newProduct.category))) && (
+                                        <div className="mt-2">
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                placeholder="Enter new category name..."
+                                                value={newProduct.category === 'CUSTOM_ENTRY' ? '' : newProduct.category}
+                                                onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                                                autoFocus
+                                                required
+                                            />
+                                            <small className="text-muted">Type the name for your new category.</small>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

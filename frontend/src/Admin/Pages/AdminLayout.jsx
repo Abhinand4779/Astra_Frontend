@@ -16,12 +16,12 @@ const AdminLayout = () => {
     const { admin, syncAdminData } = useAuth();
     const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
 
-    // Sync admin data on mount
+    // Sync admin data on mount or when admin state exists
     React.useEffect(() => {
         if (admin) {
             syncAdminData();
         }
-    }, [admin]);
+    }, [admin, syncAdminData]);
 
     // Auto-close on smaller screens
     React.useEffect(() => {
